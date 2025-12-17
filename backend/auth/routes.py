@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal
 from backend.models import User
-from backend.schemas import UserCreate, UserLogin, UserAttributes
-from backend.auth.auth_utils import hash_password, verify_password, create_access_token
+from backend.schemas import UserCreate, UserLogin
+from backend.auth.auth_utils import hash_password, verify_password
 
-router = APIRouter(prefix="/auth")
+router = APIRouter()
 
 def get_db():
     db = SessionLocal()
@@ -14,37 +14,36 @@ def get_db():
     finally:
         db.close()
 
+
+# ✅ REGISTER
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.username == user.username).first():
-        raise HTTPException(status_code=400, detail="User exists")
+    existing = db.query(User).filter(User.username == user.username).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="User already exists")
+
+    hashed = hash_password(user.password)
 
     new_user = User(
         username=user.username,
-        password=hash_password(user.password)
+        password=hashed
     )
+
     db.add(new_user)
     db.commit()
-    return {"message": "User registered successfully"}
 
+    return {"message": "Registration successful"}
+
+
+# ✅ LOGIN (already working)
 @router.post("/login")
 def login(user: UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.username == user.username).first()
-    if not db_user or not verify_password(user.password, db_user.password):
+
+    if not db_user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token({"sub": db_user.username, "role": db_user.role})
-    return {"access_token": token}
+    if not verify_password(user.password, db_user.password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
-@router.put("/assign/{username}")
-def assign_attributes(username: str, attrs: UserAttributes, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.username == username).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user.role = attrs.role
-    user.department = attrs.department
-    user.clearance = attrs.clearance
-    db.commit()
-
-    return {"message": "Attributes assigned"}
+    return {"message": "Login successful"}

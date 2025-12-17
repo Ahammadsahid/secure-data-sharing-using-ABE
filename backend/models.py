@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, LargeBinary
 from backend.database import Base
 
 
@@ -6,23 +6,21 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    password = Column(String)
+    username = Column(String, unique=True, index=True, nullable=False)
+    password = Column(String, nullable=False)
 
-    role = Column(String, default="user")        # admin / user
+    role = Column(String, default="user")
     department = Column(String, default="NA")
     clearance = Column(String, default="low")
 
 
-from sqlalchemy import Column, Integer, String, LargeBinary
-
 class SecureFile(Base):
-    __tablename__ = "files"
+    __tablename__ = "secure_files"
 
     id = Column(Integer, primary_key=True, index=True)
-    filename = Column(String)
-    owner = Column(String)
+    filename = Column(String, nullable=False)
+    owner = Column(String, nullable=False)
 
-    encrypted_data = Column(LargeBinary)
-    encrypted_key = Column(LargeBinary)
-    policy = Column(String)
+    file_path = Column(String, nullable=False)        # 🔥 NEW
+    encrypted_key = Column(LargeBinary, nullable=False)
+    policy = Column(String, nullable=False)
