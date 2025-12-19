@@ -13,21 +13,18 @@ export default function Login() {
         username,
         password,
       });
-
-      alert("Login successful");
+      localStorage.setItem("username", username);
       navigate("/dashboard");
-    } catch (err) {
+    } catch {
       alert("Invalid credentials");
     }
   };
 
   return (
-    <div>
+    <div className="card">
       <h2>Login</h2>
-
-      <input placeholder="Username" onChange={(e) => setUsername(e.target.value)} />
-      <input type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
-
+      <input placeholder="Username" onChange={e => setUsername(e.target.value)} />
+      <input type="password" placeholder="Password" onChange={e => setPassword(e.target.value)} />
       <button onClick={login}>Login</button>
     </div>
   );

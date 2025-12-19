@@ -3,27 +3,64 @@ import { useState } from "react";
 
 export default function Upload() {
   const [file, setFile] = useState(null);
-  const [policy, setPolicy] = useState("role:admin");
+  const [roles, setRoles] = useState([]);
+
+  const allRoles = [
+    "admin",
+    "manager",
+    "accountant",
+    "employee",
+    "worker",
+  ];
+
+  const toggleRole = (role) => {
+    setRoles((prev) =>
+      prev.includes(role)
+        ? prev.filter((r) => r !== role)
+        : [...prev, role]
+    );
+  };
 
   const upload = async () => {
+    if (!file || roles.length === 0) {
+      alert("Select file and at least one role");
+      return;
+    }
+
+    // 🔐 Build CP-ABE policy
+    const policy = "(" + roles.map(r => `role:${r}`).join(" OR ") + ")";
+
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("policy", policy);
 
-    await axios.post("http://127.0.0.1:8000/files/upload", formData);
-    alert("File uploaded");
+    await axios.post(
+      `http://127.0.0.1:8000/files/upload?username=${localStorage.getItem("username")}&policy=${policy}`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    alert("File uploaded & encrypted");
   };
 
   return (
-    <div className="container">
-      <h2>Upload File</h2>
+    <div className="card">
+      <h2>Admin File Upload</h2>
+
       <input type="file" onChange={(e) => setFile(e.target.files[0])} />
-      <input
-        placeholder="Policy"
-        value={policy}
-        onChange={(e) => setPolicy(e.target.value)}
-      />
-      <button onClick={upload}>Upload</button>
+
+      <h4>Who can access?</h4>
+      {allRoles.map((role) => (
+        <label key={role} style={{ display: "block" }}>
+          <input
+            type="checkbox"
+            checked={roles.includes(role)}
+            onChange={() => toggleRole(role)}
+          />
+          {role}
+        </label>
+      ))}
+
+      <button onClick={upload}>Upload Secure File</button>
     </div>
   );
 }

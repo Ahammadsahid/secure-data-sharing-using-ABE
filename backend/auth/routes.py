@@ -13,26 +13,26 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-# ✅ REGISTER
+        
+        
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.username == user.username).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="User already exists")
+    if db.query(User).filter(User.username == user.username).first():
+        raise HTTPException(status_code=400, detail="User exists")
 
-    hashed = hash_password(user.password)
+    hashed = hash_password(user.password[:72])
 
     new_user = User(
         username=user.username,
-        password=hashed
+        password=hashed,
+        role=user.role   # 🔥 THIS WAS MISSING
     )
 
     db.add(new_user)
     db.commit()
+    return {"message": "User registered"}
 
-    return {"message": "Registration successful"}
+
 
 
 # ✅ LOGIN (already working)
@@ -47,3 +47,5 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     return {"message": "Login successful"}
+
+
