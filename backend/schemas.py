@@ -1,16 +1,16 @@
-from pydantic import BaseModel   # ✅ THIS WAS MISSING
+from pydantic import BaseModel
 
 class UserCreate(BaseModel):
     username: str
     password: str
-    role: str
+    role: str   # 🔥 REQUIRED FOR YOUR PROJECT
 
-class UserLogin(BaseModel):
+class LoginSchema(BaseModel):
     username: str
     password: str
 
 
-class UserAttributes(BaseModel):
+class UserRoleAssign(BaseModel):
     role: str
     department: str
     clearance: str

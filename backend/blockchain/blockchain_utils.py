@@ -2,24 +2,15 @@ from web3 import Web3
 import json
 import os
 
-# -------------------------------
-# Ganache Configuration
-# -------------------------------
 GANACHE_URL = "http://127.0.0.1:7545"
-CONTRACT_ADDRESS = "0xa82ed7bd78CdeEec4685b2b09e62afc6baf786E2"
+CONTRACT_ADDRESS = "0x85F05208B6C3613f42366dE27BAFBd4df40a8ceb"  # ✅ SAME AS REMIX
 
-# -------------------------------
-# Load ABI
-# -------------------------------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 ABI_PATH = os.path.join(BASE_DIR, "contracts", "KeyAuthorityABI.json")
 
 with open(ABI_PATH, "r") as f:
     ABI = json.load(f)
 
-# -------------------------------
-# Web3 Setup
-# -------------------------------
 web3 = Web3(Web3.HTTPProvider(GANACHE_URL))
 
 contract = web3.eth.contract(
@@ -27,28 +18,14 @@ contract = web3.eth.contract(
     abi=ABI
 )
 
-# Use first Ganache account as backend authority
-ACCOUNT = web3.eth.accounts[0]
-
-
-# -------------------------------
-# Blockchain Helper Functions
-# -------------------------------
-def request_approval(key_id: str):
+def is_key_approved(key_id_hex: str) -> bool:
     """
-    Authority approves a key request
+    key_id_hex example:
+    0x6b65793100000000000000000000000000000000000000000000000000000000
     """
-    tx_hash = contract.functions.approveKey(
-        web3.keccak(text=key_id)
-    ).transact({"from": ACCOUNT})
-
-    web3.eth.wait_for_transaction_receipt(tx_hash)
-
-
-def check_threshold(key_id: str) -> bool:
-    """
-    Check if approval threshold is reached
-    """
+    
+    
+    
     return contract.functions.isApproved(
-        web3.keccak(text=key_id)
+        bytes.fromhex(key_id_hex[2:])
     ).call()

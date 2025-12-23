@@ -6,9 +6,16 @@ from backend.models import SecureFile, User
 from backend.aes.aes_utils import generate_aes_key, encrypt_file, decrypt_file
 from backend.abe.cpabe_utils import encrypt_aes_key, decrypt_aes_key
 from backend.storage.file_storage import save_encrypted_file, load_encrypted_file
+from backend.blockchain.blockchain_utils import is_key_approved
 
+# -------------------------------
+# Router
+# -------------------------------
 router = APIRouter(prefix="/files")
 
+# -------------------------------
+# DB Dependency
+# -------------------------------
 def get_db():
     db = SessionLocal()
     try:
@@ -16,9 +23,10 @@ def get_db():
     finally:
         db.close()
 
-# =========================
-# 🔒 ADMIN ONLY UPLOAD
-# =========================
+
+# =====================================================
+# UPLOAD FILE (ADMIN ONLY)
+# =====================================================
 @router.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),
@@ -26,32 +34,25 @@ async def upload_file(
     username: str = "",
     db: Session = Depends(get_db)
 ):
-    # 🔒 Check user
+    # Check user
     user = db.query(User).filter(User.username == username).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found")
-
-    # 🔒 Only admin can upload
-    if user.role != "admin":
+    if not user or user.role != "admin":
         raise HTTPException(status_code=403, detail="Only admin can upload files")
 
-    if not policy:
-        raise HTTPException(status_code=400, detail="Policy required")
-
-    # 🔐 Read file
+    # Read file
     raw_data = await file.read()
 
-    # 🔐 AES Encryption
+    # AES Encryption
     aes_key = generate_aes_key()
     iv, encrypted_data = encrypt_file(raw_data, aes_key)
 
-    # 💾 Save encrypted file
+    # Save encrypted file
     file_path = save_encrypted_file(iv + encrypted_data)
 
-    # 🔐 CP-ABE encrypt AES key
+    # CP-ABE encrypt AES key
     encrypted_key = encrypt_aes_key(aes_key, policy)
 
-    # 🗄 Store metadata
+    # Store metadata
     secure_file = SecureFile(
         filename=file.filename,
         owner=username,
@@ -63,26 +64,52 @@ async def upload_file(
     db.add(secure_file)
     db.commit()
 
-    return {"message": "File encrypted & uploaded securely"}
+    return {
+        "message": "File uploaded & encrypted successfully",
+        "file_id": secure_file.id
+    }
 
 
+# =====================================================
+# DOWNLOAD / DECRYPT FILE (BLOCKCHAIN + ABE)
+# =====================================================
 @router.get("/download/{file_id}")
 def download_file(
     file_id: int,
     username: str,
+    key_id: str,
     db: Session = Depends(get_db)
 ):
-    secure_file = db.query(SecureFile).filter(SecureFile.id == file_id).first()
-    if not secure_file:
-        raise HTTPException(status_code=404, detail="File not found")
-
+    # User check
     user = db.query(User).filter(User.username == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # User attributes
-    attributes = {f"role:{user.role}"}
-    user_key = {"attributes": attributes}
+    # File check
+    secure_file = db.query(SecureFile).filter(SecureFile.id == file_id).first()
+    if not secure_file:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # -------------------------------
+    # BLOCKCHAIN CHECK (4-of-7)
+    # -------------------------------
+    approved = is_key_approved(key_id)
+    if not approved:
+        raise HTTPException(
+            status_code=403,
+            detail="Blockchain approval not completed"
+        )
+
+    # -------------------------------
+    # CP-ABE CHECK
+    # -------------------------------
+    attributes = [
+        f"role:{user.role}",
+        f"dept:{user.department}",
+        f"clearance:{user.clearance}"
+    ]
+
+    user_key = {"attributes": set(attributes)}
 
     try:
         aes_key = decrypt_aes_key(
@@ -90,15 +117,18 @@ def download_file(
             user_key
         )
     except Exception:
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="CP-ABE policy denied")
 
+    # -------------------------------
+    # AES DECRYPT FILE
+    # -------------------------------
     encrypted_blob = load_encrypted_file(secure_file.file_path)
     iv = encrypted_blob[:16]
     ciphertext = encrypted_blob[16:]
 
-    decrypted_data = decrypt_file(ciphertext, aes_key, iv)
+    plaintext = decrypt_file(ciphertext, aes_key, iv)
 
     return {
         "filename": secure_file.filename,
-        "data": decrypted_data.decode(errors="ignore")
+        "data": plaintext.decode(errors="ignore")
     }

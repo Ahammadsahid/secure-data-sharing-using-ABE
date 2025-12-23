@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 contract KeyAuthority {
 
@@ -10,23 +10,18 @@ contract KeyAuthority {
     mapping(bytes32 => uint) public approvals;
     mapping(bytes32 => mapping(address => bool)) public approvedBy;
 
-    constructor(uint _threshold) {
+    constructor(address[] memory _authorities, uint _threshold) {
         owner = msg.sender;
         threshold = _threshold;
-    }
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner allowed");
-        _;
+        for (uint i = 0; i < _authorities.length; i++) {
+            authorities[_authorities[i]] = true;
+        }
     }
 
     modifier onlyAuthority() {
         require(authorities[msg.sender], "Not an authority");
         _;
-    }
-
-    function registerAuthority(address authority) public onlyOwner {
-        authorities[authority] = true;
     }
 
     function approveKey(bytes32 keyId) public onlyAuthority {
