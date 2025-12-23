@@ -3,3 +3,24 @@ __pycache__/
 *.pyc
 node_modules/
 .env
+
+# SQLite
+sqlite/
+sqlite3.exe
+sqlite3_analyzer.exe
+sqlite3_rsync.exe
+users.db
+
+# Blockchain artifacts
+artifacts/
+.states/
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# Env
+.env
