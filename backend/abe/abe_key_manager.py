@@ -1,6 +1,16 @@
 """
 ABE (Attribute-Based Encryption) Key Management Service
-Implements 4-of-7 threshold scheme for key decryption
+
+IMPORTANT NOTE on your architecture:
+- This module handles ABE encryption/decryption with attribute-based policies
+- Key sharing IS implemented (Shamir Secret Sharing for potential future use)
+- However, your current project uses BLOCKCHAIN THRESHOLD APPROVAL instead:
+  * Keys are NOT split and distributed to authorities
+  * Authorities DO NOT hold cryptographic shares
+  * Instead, authorities VOTE on the blockchain to approve access
+  * The backend releases the full decryption key after 4-of-7 approvals
+  
+This is THRESHOLD APPROVAL AUTHENTICATION, not threshold cryptography.
 """
 import json
 import os
@@ -18,8 +28,13 @@ from datetime import datetime
 
 class ABEKeyManager:
     """
-    Manages ABE keys with threshold decryption
-    Requires 4 out of 7 key shares to decrypt
+    Manages ABE (Attribute-Based Encryption) key operations.
+    
+    NOTE: This class has Shamir Secret Sharing implemented, but your project
+    uses BLOCKCHAIN THRESHOLD APPROVAL instead:
+    - Keys are NOT split and distributed
+    - Authorities do NOT hold key shares
+    - Authorities vote on blockchain; backend releases full key after 4-of-7 approve
     """
     
     def __init__(self, threshold: int = 4, total_shares: int = 7):
@@ -88,7 +103,15 @@ class ABEKeyManager:
                            file_id: str,
                            authorities: List[str]) -> Dict[str, bytes]:
         """
-        Split encryption key into 4-of-7 shares using Shamir's Secret Sharing
+        Split encryption key into 4-of-7 shares using Shamir's Secret Sharing.
+        
+        IMPORTANT: In your current project, this method is NOT used in the download flow.
+        Instead:
+        - The full AES key is stored in the database
+        - Authorities vote on the blockchain (no cryptographic shares)
+        - Backend releases the full key after 4-of-7 approvals
+        
+        This method is here for reference/potential future threshold cryptography implementation.
         
         Args:
             key_material: Key to split
@@ -137,7 +160,15 @@ class ABEKeyManager:
                       file_id: str,
                       approving_authorities: List[str]) -> Optional[bytes]:
         """
-        Reconstruct key from collected shares (requires threshold number)
+        Reconstruct key from collected shares.
+        
+        IMPORTANT: In your current project, this method is NOT used in the download flow.
+        Instead:
+        - Backend checks blockchain for approval votes (not shares)
+        - If 4-of-7 authorities approved, backend returns the full AES key from the database
+        - Authorities do NOT hold cryptographic shares; they only vote
+        
+        This method is here for reference/potential future threshold cryptography implementation.
         
         Args:
             file_id: File identifier

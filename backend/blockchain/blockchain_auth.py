@@ -13,11 +13,16 @@ import hashlib
 class BlockchainAuthService:
     def __init__(self, contract_address: str, rpc_url: str = "http://127.0.0.1:7545"):
         """
-        Initialize blockchain authentication service
+        Initialize blockchain authentication service for threshold-based approval voting.
+        
+        This service uses blockchain to record approval votes from multiple authorities.
+        It does NOT split keys cryptographically (no Shamir Secret Sharing).
+        Instead, it implements threshold approval: the decryption key is released only
+        after a minimum number of authorities vote to approve access.
         
         Args:
             contract_address: KeyAuthority contract address
-            rpc_url: Ethereum RPC endpoint
+            rpc_url: Ethereum RPC endpoint (default: local Ganache at 127.0.0.1:7545)
         """
         self.w3 = Web3(Web3.HTTPProvider(rpc_url))
         self.contract_address = contract_address
@@ -70,21 +75,28 @@ class BlockchainAuthService:
 
     def generate_key_id(self, file_id: str, user_id: str) -> bytes:
         """
-        Generate unique key ID for file+user combination
+        Generate unique key ID for file+user combination.
+        
+        This key ID is used to track approval votes on the blockchain.
+        It does NOT represent a cryptographic key share.
         
         Args:
             file_id: File identifier
             user_id: User identifier
             
         Returns:
-            bytes32 key ID
+            bytes32 key ID (used for blockchain approval tracking)
         """
         combined = f"{file_id}:{user_id}:{datetime.utcnow().isoformat()}"
         return hashlib.sha256(combined.encode()).digest()
 
     def initiate_key_approval(self, file_id: str, user_id: str, user_attributes: dict) -> dict:
         """
-        Initiate key approval process on blockchain
+        Initiate approval voting process on blockchain.
+        
+        Creates an approval request record. Authorities will independently vote
+        by calling the smart contract (simulated via /api/access/simulate-approvals
+        in this project). Backend does NOT push requests to authorities.
         
         Args:
             file_id: File to decrypt
@@ -92,7 +104,7 @@ class BlockchainAuthService:
             user_attributes: User's attributes {role, department, clearance}
             
         Returns:
-            Approval request data
+            Approval request data with authorities list and required threshold
         """
         key_id = self.generate_key_id(file_id, user_id)
         key_id_hex = "0x" + key_id.hex()
@@ -111,13 +123,16 @@ class BlockchainAuthService:
 
     def get_approval_status(self, key_id: str) -> dict:
         """
-        Get current approval status from blockchain
+        Get current approval vote count from blockchain.
+        
+        Queries the smart contract to check how many authorities have voted to approve.
+        Returns True only if >= 4 (threshold) authorities have approved.
         
         Args:
             key_id: The key ID (hex format)
             
         Returns:
-            Approval status
+            Approval status with current count and threshold info
         """
         try:
             # Convert hex to bytes32
@@ -142,13 +157,16 @@ class BlockchainAuthService:
 
     def verify_approval(self, key_id: str) -> bool:
         """
-        Verify if key has sufficient approvals
+        Verify if a key has reached the approval threshold (4 out of 7).
+        
+        Queries the smart contract to check the vote count.
+        Returns True only if >= 4 authorities have approved.
         
         Args:
             key_id: The key ID (hex format)
             
         Returns:
-            True if approved, False otherwise
+            True if threshold met, False otherwise
         """
         try:
             key_bytes = bytes.fromhex(key_id.replace("0x", ""))
@@ -197,11 +215,15 @@ class BlockchainAuthService:
 
     def approve_key(self, key_id: str, authority_address: str) -> Optional[str]:
         """
-        Call the contract to approve a key from an authority address (used for testing/simulation)
+        Simulate an authority approving a key by calling the smart contract.
+        
+        In a real system, an authority would sign and submit this transaction from their wallet.
+        In this project, we simulate the approval for local testing via /api/access/simulate-approvals endpoint.
+        The approval vote is recorded on the blockchain (Ganache).
 
         Args:
             key_id: hex string key id (0x...)
-            authority_address: authority address to send transaction from
+            authority_address: authority account address to send approval from
 
         Returns:
             Transaction hash hex string on success, None on failure
