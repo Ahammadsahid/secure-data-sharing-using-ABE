@@ -1,34 +1,251 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f6f8;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 .container {
-  width: 350px;
-  margin: 80px auto;
+  max-width: 1200px;
+  margin: 0 auto;
   background: white;
-  padding: 20px;
-  border-radius: 6px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
 }
 
-h2 {
+header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px;
   text-align: center;
 }
 
-input, button {
-  width: 100%;
-  padding: 8px;
-  margin: 6px 0;
+header h1 {
+  font-size: 32px;
+  margin-bottom: 8px;
+  font-weight: 700;
 }
 
-button {
-  background-color: #1976d2;
-  color: white;
+header p {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+nav {
+  display: flex;
+  background: white;
+  border-bottom: 2px solid #ecf0f1;
+  overflow-x: auto;
+}
+
+nav button {
+  flex: 1;
+  padding: 15px 20px;
   border: none;
+  background: white;
+  color: #34495e;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  min-width: 120px;
+}
+
+nav button:hover {
+  background: #f8f9fa;
+  color: #667eea;
+  border-bottom-color: #667eea;
+}
+
+nav button.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+  background: #f0f4ff;
+}
+
+.content {
+  padding: 40px;
+  min-height: 500px;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="file"] {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border: 2px solid #bdc3c7;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="file"]:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 8px rgba(102, 126, 234, 0.2);
+}
+
+input[type="file"] {
+  padding: 10px;
   cursor: pointer;
 }
 
-button:hover {
-  background-color: #0f5bb5;
+input:disabled {
+  background-color: #ecf0f1;
+  cursor: not-allowed;
+}
+
+/* Checkboxes and Radios */
+input[type="checkbox"],
+input[type="radio"] {
+  margin-right: 8px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: #667eea;
+}
+
+/* Buttons */
+button {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+  margin-right: 8px;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Text */
+h1, h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+h3, h4 {
+  color: #34495e;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+p {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+label {
+  color: #34495e;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* Lists */
+ul, ol {
+  margin-left: 20px;
+  color: #555;
+}
+
+li {
+  margin: 5px 0;
+}
+
+/* Alerts */
+.alert {
+  padding: 15px;
+  border-radius: 6px;
+  margin: 10px 0;
+}
+
+.alert.success {
+  background: #d5f4e6;
+  color: #27ae60;
+  border-left: 4px solid #27ae60;
+}
+
+.alert.error {
+  background: #fadbd8;
+  color: #e74c3c;
+  border-left: 4px solid #e74c3c;
+}
+
+.alert.warning {
+  background: #fef5e7;
+  color: #f39c12;
+  border-left: 4px solid #f39c12;
+}
+
+.alert.info {
+  background: #d6eaf8;
+  color: #3498db;
+  border-left: 4px solid #3498db;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .content {
+    padding: 20px;
+  }
+
+  .card {
+    padding: 15px;
+  }
+
+  header h1 {
+    font-size: 24px;
+  }
+
+  nav {
+    flex-wrap: wrap;
+  }
+
+  nav button {
+    flex: 0 1 auto;
+  }
 }

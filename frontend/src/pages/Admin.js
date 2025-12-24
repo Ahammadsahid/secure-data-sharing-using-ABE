@@ -7,12 +7,11 @@ export default function Admin() {
     admin: false,
     manager: false,
     accountant: false,
+    employee: false,
     worker: false,
   });
 
   const upload = async () => {
-    console.log("UPLOAD CLICKED");
-
     if (!file) {
       alert("Select a file first");
       return;
@@ -30,35 +29,35 @@ export default function Admin() {
     formData.append("file", file);
     formData.append(
       "policy",
-      selectedRoles.map(r => `role:${r}`).join(" OR ")
+      selectedRoles.map(r => `role:${r}`).join(" AND ")
     );
     formData.append("username", username);
 
     try {
       const res = await axios.post(
         "http://127.0.0.1:8000/files/upload",
-        formData
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        }
       );
+
       alert(res.data.message);
     } catch (err) {
-      console.error("UPLOAD ERROR:", err);
-      if (err.response) {
-        alert(err.response.data.detail);
-      } else {
-        alert("Frontend crash prevented. Check console.");
-      }
+      console.error(err);
+      alert(err.response?.data?.detail || "Upload failed");
     }
   };
 
   return (
     <div style={{ padding: "20px" }}>
-      <h1>ADMIN PANEL LOADED</h1>
-      <h2>Admin Upload Panel</h2>
+      <h2>Admin File Upload</h2>
 
       <input type="file" onChange={e => setFile(e.target.files[0])} />
 
-      <h4>Select who can access</h4>
-
+      <h4>Select Roles</h4>
       {Object.keys(roles).map(r => (
         <label key={r}>
           <input
@@ -73,7 +72,6 @@ export default function Admin() {
         </label>
       ))}
 
-      <br />
       <button onClick={upload}>Upload File</button>
     </div>
   );

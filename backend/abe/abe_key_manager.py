@@ -1,0 +1,329 @@
+"""
+ABE (Attribute-Based Encryption) Key Management Service
+Implements 4-of-7 threshold scheme for key decryption
+"""
+import json
+import os
+from typing import Dict, List, Tuple, Optional
+try:
+    from charm.toolbox.pairinggroup import PairingGroup, ZR, G1, G2, GT
+    from charm.toolbox.secretutil import SecretUtil
+    from charm.core.math.pairing_math import hashPair as extractor
+    CHARM_AVAILABLE = True
+except Exception:
+    CHARM_AVAILABLE = False
+import hashlib
+import base64
+from datetime import datetime
+
+class ABEKeyManager:
+    """
+    Manages ABE keys with threshold decryption
+    Requires 4 out of 7 key shares to decrypt
+    """
+    
+    def __init__(self, threshold: int = 4, total_shares: int = 7):
+        """
+        Initialize ABE Key Manager
+        
+        Args:
+            threshold: Number of shares needed (default: 4)
+            total_shares: Total number of shares (default: 7)
+        """
+        self.threshold = threshold
+        self.total_shares = total_shares
+        if CHARM_AVAILABLE:
+            try:
+                self.pairing_group = PairingGroup('SS512')
+                self.secret_util = SecretUtil(self.pairing_group, verbose=False)
+            except Exception:
+                self.pairing_group = None
+                self.secret_util = None
+        else:
+            self.pairing_group = None
+            self.secret_util = None
+        
+        # Storage for shares
+        self.key_shares: Dict[str, List[bytes]] = {}
+        self.share_mapping: Dict[str, Dict] = {}
+
+    def generate_master_key(self, attributes: Dict[str, str]) -> Tuple[bytes, bytes]:
+        """
+        Generate master key and public key for attribute set
+        
+        Args:
+            attributes: User attributes {role, department, clearance}
+            
+        Returns:
+            (master_key_bytes, public_key_bytes)
+        """
+        # Create attribute string
+        attr_string = ",".join([f"{k}:{v}" for k, v in attributes.items()])
+
+        # If charm library is available use pairing-based keys, otherwise fallback
+        if CHARM_AVAILABLE and self.pairing_group is not None:
+            msk = self.pairing_group.random(ZR)
+            mpk = self.pairing_group.random(G2) ** msk
+            attr_hash = hashlib.sha256(attr_string.encode()).digest()
+            attr_element = self.pairing_group.hash(attr_hash, ZR)
+            gpk = (mpk ** attr_element)
+
+            return (
+                base64.b64encode(str(msk).encode()),
+                base64.b64encode(str(mpk).encode())
+            )
+
+        # Fallback (no charm) — generate deterministic pseudo-keys using hashing
+        seed = hashlib.sha256(attr_string.encode() + os.urandom(16)).digest()
+        msk_bytes = hashlib.sha256(seed + b"msk").digest()
+        mpk_bytes = hashlib.sha256(seed + b"mpk").digest()
+
+        return (
+            base64.b64encode(msk_bytes),
+            base64.b64encode(mpk_bytes)
+        )
+
+    def split_key_to_shares(self, 
+                           key_material: bytes, 
+                           file_id: str,
+                           authorities: List[str]) -> Dict[str, bytes]:
+        """
+        Split encryption key into 4-of-7 shares using Shamir's Secret Sharing
+        
+        Args:
+            key_material: Key to split
+            file_id: File identifier
+            authorities: List of 7 authority addresses
+            
+        Returns:
+            Dict mapping authority addresses to their key shares
+        """
+        if len(authorities) != self.total_shares:
+            raise ValueError(f"Expected {self.total_shares} authorities, got {len(authorities)}")
+        
+        # Reconstruct key as integer
+        key_int = int.from_bytes(key_material[:32], 'big')
+        
+        # Use Shamir's Secret Sharing
+        shares = self._shamir_split(key_int, self.threshold, self.total_shares)
+        
+        # Map shares to authorities
+        share_dict = {}
+        share_meta = {}
+        
+        for i, auth_address in enumerate(authorities):
+            share_dict[auth_address] = base64.b64encode(
+                str(shares[i]).encode()
+            )
+            share_meta[auth_address] = {
+                "share_index": i,
+                "file_id": file_id,
+                "created_at": datetime.utcnow().isoformat()
+            }
+        
+        # Store metadata
+        self.share_mapping[file_id] = {
+            "authorities": authorities,
+            "threshold": self.threshold,
+            "total_shares": self.total_shares,
+            "created_at": datetime.utcnow().isoformat()
+        }
+        
+        self.key_shares[file_id] = share_meta
+        
+        return share_dict
+
+    def collect_shares(self, 
+                      file_id: str,
+                      approving_authorities: List[str]) -> Optional[bytes]:
+        """
+        Reconstruct key from collected shares (requires threshold number)
+        
+        Args:
+            file_id: File identifier
+            approving_authorities: List of authorities that approved
+            
+        Returns:
+            Reconstructed key if threshold met, None otherwise
+        """
+        if len(approving_authorities) < self.threshold:
+            return None
+        
+        if len(approving_authorities) > self.total_shares:
+            approving_authorities = approving_authorities[:self.total_shares]
+        
+        # Get original shares mapping
+        if file_id not in self.share_mapping:
+            return None
+        
+        meta = self.share_mapping[file_id]
+        
+        # Get indices of approving authorities
+        indices = []
+        shares = []
+        
+        for auth in approving_authorities:
+            if auth in meta["authorities"]:
+                idx = meta["authorities"].index(auth)
+                indices.append(idx)
+                # Reconstruct share (placeholder - in real scenario retrieve from blockchain)
+                share_value = hash(f"{file_id}:{auth}") % (2**256)
+                shares.append(share_value)
+        
+        if len(shares) < self.threshold:
+            return None
+        
+        # Lagrange interpolation to reconstruct
+        reconstructed = self._lagrange_interpolate(shares[:self.threshold], 
+                                                   indices[:self.threshold])
+        
+        return reconstructed.to_bytes(32, 'big')
+
+    def _shamir_split(self, secret: int, threshold: int, shares: int) -> List[int]:
+        """
+        Shamir's Secret Sharing - split secret into shares
+        
+        Args:
+            secret: Secret to split
+            threshold: Number of shares needed to reconstruct
+            shares: Total number of shares
+            
+        Returns:
+            List of share values
+        """
+        import random
+        
+        # Prime number for modular arithmetic
+        prime = 2**256 - 2**32 - 977  # Bitcoin's SECP256k1 prime
+        
+        # Generate random coefficients
+        coefficients = [secret] + [random.randint(0, prime - 1) for _ in range(threshold - 1)]
+        
+        # Generate shares by evaluating polynomial at different points
+        share_list = []
+        for x in range(1, shares + 1):
+            y = 0
+            for i, coeff in enumerate(coefficients):
+                y = (y + coeff * (x ** i)) % prime
+            share_list.append(y)
+        
+        return share_list
+
+    def _lagrange_interpolate(self, shares: List[int], indices: List[int]) -> int:
+        """
+        Lagrange interpolation to reconstruct secret
+        
+        Args:
+            shares: Share values
+            indices: Original x indices (1-based)
+            
+        Returns:
+            Reconstructed secret
+        """
+        prime = 2**256 - 2**32 - 977
+        secret = 0
+        
+        for i, share in enumerate(shares):
+            numerator = 1
+            denominator = 1
+            
+            for j, other_idx in enumerate(indices):
+                if i != j:
+                    numerator = (numerator * (-other_idx)) % prime
+                    denominator = (denominator * (indices[i] - other_idx)) % prime
+            
+            # Modular inverse
+            denominator_inv = pow(denominator, -1, prime)
+            secret = (secret + share * numerator * denominator_inv) % prime
+        
+        return secret
+
+    def encrypt_file(self, 
+                    file_data: bytes,
+                    policy: str,
+                    user_attributes: Dict[str, str]) -> Tuple[bytes, Dict]:
+        """
+        Encrypt file data with ABE
+        
+        Args:
+            file_data: File content to encrypt
+            policy: Attribute policy (e.g., "role:admin AND department:IT")
+            user_attributes: User's attributes
+            
+        Returns:
+            (encrypted_data, encryption_metadata)
+        """
+        # Generate encryption key
+        enc_key = hashlib.sha256(str(user_attributes).encode()).digest()
+        
+        # Simple XOR encryption (in production use AES-256)
+        encrypted = bytes(a ^ b for a, b in zip(file_data, enc_key * (len(file_data) // 32 + 1)))
+        
+        metadata = {
+            "policy": policy,
+            "attributes_required": self._parse_policy(policy),
+            "encrypted_at": datetime.utcnow().isoformat(),
+            "threshold": self.threshold,
+            "total_shares": self.total_shares
+        }
+        
+        return encrypted, metadata
+
+    def decrypt_file(self,
+                    encrypted_data: bytes,
+                    decryption_key: bytes,
+                    user_attributes: Dict[str, str]) -> Optional[bytes]:
+        """
+        Decrypt file data with reconstructed key
+        
+        Args:
+            encrypted_data: Encrypted file content
+            decryption_key: Reconstructed key from threshold shares
+            user_attributes: User's attributes
+            
+        Returns:
+            Decrypted data if successful
+        """
+        try:
+            # Verify attributes match policy
+            # In production: proper attribute verification
+            
+            # Decrypt using XOR
+            decrypted = bytes(a ^ b for a, b in zip(
+                encrypted_data, 
+                decryption_key * (len(encrypted_data) // 32 + 1)
+            ))
+            
+            return decrypted
+        except Exception as e:
+            print(f"Decryption error: {e}")
+            return None
+
+    def _parse_policy(self, policy: str) -> List[str]:
+        """Parse policy string to extract required attributes"""
+        # Simple parser for "attr1:value1 AND attr2:value2"
+        attributes = []
+        for part in policy.replace(" AND ", ",").split(","):
+            if ":" in part:
+                attr = part.split(":")[0].strip()
+                attributes.append(attr)
+        return attributes
+
+    def verify_attributes(self, user_attributes: Dict[str, str], policy: str) -> bool:
+        """Verify if user attributes satisfy policy"""
+        required = self._parse_policy(policy)
+        return all(attr in user_attributes for attr in required)
+
+
+# Singleton instance
+_abe_manager: Optional[ABEKeyManager] = None
+
+
+def get_abe_manager(threshold: int = 4, total_shares: int = 7) -> ABEKeyManager:
+    """Get or create ABE manager instance"""
+    global _abe_manager
+    
+    if _abe_manager is None:
+        _abe_manager = ABEKeyManager(threshold, total_shares)
+    
+    return _abe_manager

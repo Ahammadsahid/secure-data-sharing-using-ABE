@@ -21,13 +21,33 @@ def generate_user_key(master_key, attributes):
 
 def policy_satisfied(attributes, policy):
     """
-    Simple policy evaluator
-    Example policy: 'role:admin AND dept:IT'
+    Policy evaluator supporting AND, OR operators
+    Example policy: '(role:admin OR role:manager) AND (dept:IT OR dept:Finance) AND clearance:high'
+    
+    Returns True if user attributes satisfy the policy
     """
-    policy_parts = policy.replace("(", "").replace(")", "").split("AND")
-    policy_parts = [p.strip() for p in policy_parts]
-
-    return all(p in attributes for p in policy_parts)
+    # Remove extra spaces
+    policy = policy.replace("  ", " ")
+    
+    # Split by AND first (AND has lower precedence)
+    and_parts = policy.split(" AND ")
+    
+    for and_part in and_parts:
+        and_part = and_part.strip()
+        
+        # Remove parentheses if present
+        if and_part.startswith("(") and and_part.endswith(")"):
+            and_part = and_part[1:-1]
+        
+        # Split by OR (each OR part is an alternative)
+        or_parts = and_part.split(" OR ")
+        or_parts = [p.strip() for p in or_parts]
+        
+        # For this AND group, at least one OR part must match
+        if not any(part in attributes for part in or_parts):
+            return False
+    
+    return True
 
 
 def encrypt_aes_key(aes_key: bytes, policy: str):

@@ -1,0 +1,17 @@
+{
+  "contractAddress": "0x126d0D3B866D7ebb5856722B722Bc795a17AD1Ce",
+  "network": "Ganache",
+  "rpcUrl": "http://127.0.0.1:7545",
+  "chainId": 1337,
+  "threshold": 4,
+  "authorities": [
+    "0x266E6E85ae9D38F8888925c724Ab1B739E4794f3",
+    "0x8F29929fC7094318BF562f981b04ecfA177Ecc54",
+    "0x6518Bcb59B8E40A5a24189217912C511b783590f",
+    "0x380cb6B16Ee5AbbB8A635e55e91c6F0eb982D7b6",
+    "0x463433BC694b26751130e6382081818B4D205a0C",
+    "0xF811e1e3eFFf3f857431f4CEea4D67c0a0c0e4C9",
+    "0x6c60d1EEc446c567eF756bf9d07CE0056DAEC777"
+  ],
+  "deployedAt": "2025-12-25"
+}

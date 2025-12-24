@@ -2,9 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 
-# 🔥 Absolute path to users.db (PROJECT ROOT)
+# 🔥 FORCE SINGLE DB LOCATION (PROJECT ROOT)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_PATH = os.path.join(BASE_DIR, "..", "users.db")
+DB_PATH = os.path.join(BASE_DIR, "users.db")
 
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 

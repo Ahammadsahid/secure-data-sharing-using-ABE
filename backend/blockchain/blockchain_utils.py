@@ -3,7 +3,7 @@ import json
 import os
 
 GANACHE_URL = "http://127.0.0.1:7545"
-CONTRACT_ADDRESS = "0x85F05208B6C3613f42366dE27BAFBd4df40a8ceb"  # ✅ SAME AS REMIX
+CONTRACT_ADDRESS = "0x85F05208B6C3613f42366dE27BAFBd4df40a8ceb"  # ✅ CORRECT CONTRACT ADDRESS
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 ABI_PATH = os.path.join(BASE_DIR, "contracts", "KeyAuthorityABI.json")
@@ -18,14 +18,24 @@ contract = web3.eth.contract(
     abi=ABI
 )
 
+# def is_key_approved(key_id_hex: str) -> bool:
+#     """
+#     key_id_hex example:
+#     0x6b65793100000000000000000000000000000000000000000000000000000000
+#     """
+    
+    
+    
+#     return contract.functions.isApproved(
+#         bytes.fromhex(key_id_hex[2:])
+#     ).call()
+
+
+
 def is_key_approved(key_id_hex: str) -> bool:
-    """
-    key_id_hex example:
-    0x6b65793100000000000000000000000000000000000000000000000000000000
-    """
-    
-    
-    
-    return contract.functions.isApproved(
-        bytes.fromhex(key_id_hex[2:])
-    ).call()
+    try:
+        key_bytes = bytes.fromhex(key_id_hex[2:])
+        return contract.functions.isApproved(key_bytes).call()
+    except Exception as e:
+        print("BLOCKCHAIN ERROR:", e)
+        return False
