@@ -123,37 +123,52 @@ class ABEKeyManager:
         """
         if len(authorities) != self.total_shares:
             raise ValueError(f"Expected {self.total_shares} authorities, got {len(authorities)}")
-        
-        # Reconstruct key as integer
+
+        # Reconstruct key as integer (use first 32 bytes)
         key_int = int.from_bytes(key_material[:32], 'big')
-        
-        # Use Shamir's Secret Sharing
+
+        # Use Shamir's Secret Sharing to generate integer shares
         shares = self._shamir_split(key_int, self.threshold, self.total_shares)
-        
-        # Map shares to authorities
+
+        # Prepare storage for share metadata and actual shares
         share_dict = {}
         share_meta = {}
-        
+
+        # Ensure storage directory for shares exists
+        base_share_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'storage', 'shares')
+        os.makedirs(base_share_dir, exist_ok=True)
+        file_share_dir = os.path.join(base_share_dir, str(file_id))
+        os.makedirs(file_share_dir, exist_ok=True)
+
         for i, auth_address in enumerate(authorities):
-            share_dict[auth_address] = base64.b64encode(
-                str(shares[i]).encode()
-            )
+            # Store the integer share as base64-encoded bytes on disk per authority
+            share_value = shares[i]
+            share_bytes = str(share_value).encode()
+            b64 = base64.b64encode(share_bytes)
+
+            share_path = os.path.join(file_share_dir, f"{auth_address}.share")
+            with open(share_path, 'wb') as sf:
+                sf.write(b64)
+
+            share_dict[auth_address] = b64
             share_meta[auth_address] = {
-                "share_index": i,
+                "share_index": i + 1,  # 1-based index for Shamir
                 "file_id": file_id,
+                "share_path": share_path,
                 "created_at": datetime.utcnow().isoformat()
             }
-        
-        # Store metadata
+
+        # Store metadata mappings in memory
         self.share_mapping[file_id] = {
             "authorities": authorities,
             "threshold": self.threshold,
             "total_shares": self.total_shares,
             "created_at": datetime.utcnow().isoformat()
         }
-        
+
+        # Store actual share metadata (not the secret) in memory
         self.key_shares[file_id] = share_meta
-        
+
         return share_dict
 
     def collect_shares(self, 
@@ -179,35 +194,49 @@ class ABEKeyManager:
         """
         if len(approving_authorities) < self.threshold:
             return None
-        
-        if len(approving_authorities) > self.total_shares:
-            approving_authorities = approving_authorities[:self.total_shares]
-        
-        # Get original shares mapping
+
         if file_id not in self.share_mapping:
             return None
-        
+
         meta = self.share_mapping[file_id]
-        
-        # Get indices of approving authorities
-        indices = []
-        shares = []
-        
-        for auth in approving_authorities:
-            if auth in meta["authorities"]:
-                idx = meta["authorities"].index(auth)
-                indices.append(idx)
-                # Reconstruct share (placeholder - in real scenario retrieve from blockchain)
-                share_value = hash(f"{file_id}:{auth}") % (2**256)
-                shares.append(share_value)
-        
-        if len(shares) < self.threshold:
+
+        # Limit to known authorities
+        approving = [a for a in approving_authorities if a in meta["authorities"]]
+        if len(approving) < self.threshold:
             return None
-        
-        # Lagrange interpolation to reconstruct
-        reconstructed = self._lagrange_interpolate(shares[:self.threshold], 
-                                                   indices[:self.threshold])
-        
+
+        # Collect share integers and their 1-based indices
+        shares_collected = []
+        indices = []
+
+        base_share_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'storage', 'shares')
+        file_share_dir = os.path.join(base_share_dir, str(file_id))
+
+        for auth in approving[:self.total_shares]:
+            idx = meta["authorities"].index(auth) + 1
+            share_file = os.path.join(file_share_dir, f"{auth}.share")
+            if not os.path.exists(share_file):
+                continue
+            with open(share_file, 'rb') as sf:
+                b64 = sf.read()
+            try:
+                share_bytes = base64.b64decode(b64)
+                share_int = int(share_bytes.decode())
+            except Exception:
+                continue
+
+            indices.append(idx)
+            shares_collected.append(share_int)
+
+            if len(shares_collected) >= self.threshold:
+                break
+
+        if len(shares_collected) < self.threshold:
+            return None
+
+        # Reconstruct secret using Lagrange interpolation
+        reconstructed = self._lagrange_interpolate(shares_collected[:self.threshold], indices[:self.threshold])
+
         return reconstructed.to_bytes(32, 'big')
 
     def _shamir_split(self, secret: int, threshold: int, shares: int) -> List[int]:

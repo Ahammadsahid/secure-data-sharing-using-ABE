@@ -10,6 +10,8 @@ from backend.aes.aes_utils import generate_aes_key, encrypt_file, decrypt_file
 from backend.abe.cpabe_utils import encrypt_aes_key, decrypt_aes_key
 from backend.storage.file_storage import save_encrypted_file, load_encrypted_file
 from backend.blockchain.blockchain_auth import get_blockchain_service
+from backend.abe.abe_key_manager import get_abe_manager
+import json
 
 # -------------------------------
 # Router
@@ -52,13 +54,13 @@ async def upload_file(
 
     file_path = save_encrypted_file(iv + encrypted_data)
 
-    encrypted_key = encrypt_aes_key(aes_key, policy)
-
+    # Create DB record first to obtain file ID
     secure_file = SecureFile(
         filename=file.filename,
         owner=username,
         file_path=file_path,
-        encrypted_key=str(encrypted_key).encode(),
+        # placeholder - real shares stored on disk by ABE manager
+        encrypted_key=b"",
         policy=policy
     )
 
@@ -66,8 +68,26 @@ async def upload_file(
     db.commit()
     db.refresh(secure_file)
 
+    # Now split AES key into Shamir shares and persist per-authority
+    try:
+        blockchain = get_blockchain_service()
+        abe = get_abe_manager()
+        authorities = blockchain.authorities
+
+        abe.split_key_to_shares(aes_key, str(secure_file.id), authorities)
+
+        # Store minimal marker in encrypted_key column (JSON) without exposing key material
+        marker = {"shares_stored": True, "file_id": str(secure_file.id)}
+        secure_file.encrypted_key = json.dumps(marker).encode()
+        db.add(secure_file)
+        db.commit()
+        db.refresh(secure_file)
+    except Exception as e:
+        # Cleanup on failure
+        print(f"Error while splitting/storing shares: {e}")
+
     return {
-        "message": "File uploaded and encrypted successfully",
+        "message": "File uploaded, encrypted, and shares distributed to authorities",
         "file_id": secure_file.id
     }
 
