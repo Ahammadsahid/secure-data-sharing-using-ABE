@@ -1,7 +1,8 @@
 {
-  "contractAddress": "Python-Simulator",
-  "deploymentType": "Python-based (avoids Ganache/Solc issues)",
-  "network": "local",
+  "contractAddress": "0x[YOUR_CONTRACT_ADDRESS_FROM_REMIX]",
+  "deploymentMethod": "Remix IDE",
+  "deploymentNote": "Contract deployed via Remix IDE due to local EVM compatibility issues. Update contractAddress with the address from Remix after deployment.",
+  "network": "Ganache (localhost:7545)",
   "rpcUrl": "http://127.0.0.1:7545",
   "threshold": 4,
   "authorities": [
@@ -13,6 +14,16 @@
     "0x211Db7b2b475E9282B31Bd0fF39220805505Ff71",
     "0x7FAdEAa4442bc60678ee16E401Ed80342aC24d16"
   ],
-  "message": "This simulates blockchain approval voting using JSON storage. Suitable for local development and testing.",
-  "timestamp": "2025-12-25T11:11:17.270129"
+  "deploymentSteps": [
+    "1. Copy contracts/KeyAuthority.sol to Remix IDE",
+    "2. Set compiler to 0.8.x",
+    "3. Compile the contract",
+    "4. Connect MetaMask to Ganache (localhost:7545)",
+    "5. Deploy with constructor args: [authorities array], 4",
+    "6. Copy deployed contract address",
+    "7. Update contractAddress field in this file",
+    "8. Restart backend to use new address"
+  ],
+  "architecture": "Blockchain-based 4-of-7 threshold approval voting with Shamir Secret Sharing key splitting",
+  "timestamp": "2025-12-25"
 }

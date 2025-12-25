@@ -2,9 +2,9 @@
 Blockchain Authentication Service
 Integrates with KeyAuthority contract for decentralized key approvals
 
-Can use either:
-1. Real contract on Ganache (if deployed)
-2. Python-based simulator (fallback for local development)
+Deployment: Contract deployed via Remix IDE to local Ganache instance.
+Due to local EVM compatibility issues, use Remix IDE for deployment instead of local compilation.
+The architecture and logic remain blockchain-based (4-of-7 threshold approval voting).
 """
 import json
 import os
@@ -127,9 +127,10 @@ class BlockchainAuthService:
 
     def get_approval_status(self, key_id: str) -> dict:
         """
-        Get current approval vote count from the simulator.
+        Get current approval vote count from blockchain.
         
-        Returns how many authorities have voted and whether threshold is reached.
+        Queries the smart contract to check how many authorities have voted to approve.
+        Returns True only if >= 4 (threshold) authorities have approved.
         
         Args:
             key_id: The key ID (hex format)
@@ -138,22 +139,19 @@ class BlockchainAuthService:
             Approval status with current count and threshold info
         """
         try:
-            from pathlib import Path
-            import sys
-            sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-            from scripts.deploy_python_simulator import KeyAuthoritySimulator
+            # Convert hex to bytes32
+            key_bytes = bytes.fromhex(key_id.replace("0x", ""))
             
-            simulator = KeyAuthoritySimulator()
-            approval_count = simulator.get_approval_count(key_id)
-            is_approved = simulator.is_approved(key_id, threshold=self.threshold)
+            # Get approval count from contract
+            approval_count = self.contract.functions.approvals(key_bytes).call()
+            is_approved = self.contract.functions.isApproved(key_bytes).call()
             
             return {
                 "key_id": key_id,
                 "current_approvals": approval_count,
                 "required_approvals": self.threshold,
                 "is_approved": is_approved,
-                "approval_percentage": int((approval_count / self.threshold) * 100) if approval_count > 0 else 0,
-                "approvers": simulator.get_approvers(key_id)
+                "approval_percentage": int((approval_count / self.threshold) * 100)
             }
         except Exception as e:
             return {
@@ -165,8 +163,9 @@ class BlockchainAuthService:
         """
         Verify if a key has reached the approval threshold (4 out of 7).
         
-        Checks the Python simulator approval storage.
-
+        Queries the smart contract to check the vote count.
+        Returns True only if >= 4 authorities have approved.
+        
         Args:
             key_id: The key ID (hex format)
             
@@ -174,13 +173,8 @@ class BlockchainAuthService:
             True if threshold met, False otherwise
         """
         try:
-            from pathlib import Path
-            import sys
-            sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-            from scripts.deploy_python_simulator import KeyAuthoritySimulator
-            
-            simulator = KeyAuthoritySimulator()
-            return simulator.is_approved(key_id, threshold=self.threshold)
+            key_bytes = bytes.fromhex(key_id.replace("0x", ""))
+            return self.contract.functions.isApproved(key_bytes).call()
         except Exception as e:
             print(f"Verification error: {e}")
             return False
@@ -225,33 +219,28 @@ class BlockchainAuthService:
 
     def approve_key(self, key_id: str, authority_address: str) -> Optional[str]:
         """
-        Record an authority approval for a key.
+        Authority approves a key by calling the smart contract.
         
-        Uses the Python simulator to store approvals in JSON (avoids Ganache/Solc issues).
-        In a real system, an authority would sign and submit a transaction from their wallet.
-        The approval vote is recorded in backend/blockchain/approvals_storage.json.
+        In a real system, an authority would sign and submit this transaction from their wallet.
+        In this project, use /api/access/simulate-approvals to send approvals from authority addresses.
+        The approval vote is recorded on the blockchain (Ganache).
 
         Args:
             key_id: hex string key id (0x...)
-            authority_address: authority account address
+            authority_address: authority account address to send approval from
 
         Returns:
-            Transaction hash (simulated) on success, None on failure
+            Transaction hash hex string on success, None on failure
         """
         try:
-            # Use Python simulator
-            from pathlib import Path
-            import sys
-            sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-            from scripts.deploy_python_simulator import KeyAuthoritySimulator
-            
-            simulator = KeyAuthoritySimulator()
-            success = simulator.approve_key(key_id, authority_address)
-            
-            if success:
-                # Return a fake but consistent tx hash
-                return "0x" + hashlib.sha256(f"{key_id}:{authority_address}".encode()).hexdigest()
-            return None
+            key_bytes = bytes.fromhex(key_id.replace("0x", ""))
+            tx = self.contract.functions.approveKey(key_bytes).transact({
+                'from': Web3.to_checksum_address(authority_address),
+                'gas': 200000
+            })
+            # Wait for receipt (Ganache mines instantly)
+            receipt = self.w3.eth.wait_for_transaction_receipt(tx)
+            return receipt.transactionHash.hex()
         except Exception as e:
             print(f"approve_key error: {e}")
             return None
