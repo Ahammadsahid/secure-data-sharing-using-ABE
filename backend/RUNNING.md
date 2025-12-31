@@ -38,6 +38,13 @@ python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
   }
 - This sends approve transactions using Ganache unlocked accounts.
 
+Troubleshooting (0/4 approvals / contract misconfigured)
+- If approvals never increase, or you see `contract_misconfigured` / threshold mismatch errors, your deployed `KeyAuthority` contract was deployed with the wrong constructor args.
+- Redeploy `KeyAuthority` with:
+  - `authorities`: the FIRST 7 Ganache accounts
+  - `threshold`: 4
+- Update `backend/blockchain/DEPLOYMENT_INFO.json` with the new `contractAddress` (and ideally the same `authorities` list), then restart the backend.
+
 6) Download decrypted file via frontend or API
 - Frontend `Download` page calls `/files/download/{file_id}` with query params `username` and `key_id`.
 - Example cURL:

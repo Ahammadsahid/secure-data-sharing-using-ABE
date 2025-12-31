@@ -25,3 +25,14 @@ def load_encrypted_file(file_path: str) -> bytes:
     """
     with open(file_path, "rb") as f:
         return f.read()
+
+
+def delete_encrypted_file(file_path: str) -> None:
+    """Delete an encrypted file blob from disk.
+
+    This is best-effort: if the file doesn't exist, it's treated as already deleted.
+    """
+    try:
+        os.remove(file_path)
+    except FileNotFoundError:
+        return

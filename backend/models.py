@@ -22,3 +22,11 @@ class SecureFile(Base):
     file_path = Column(String, nullable=False)
     encrypted_key = Column(LargeBinary, nullable=False)
     policy = Column(String, nullable=False)
+
+
+class RecoveryCode(Base):
+    __tablename__ = "recovery_codes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    code_hash = Column(String, nullable=False)

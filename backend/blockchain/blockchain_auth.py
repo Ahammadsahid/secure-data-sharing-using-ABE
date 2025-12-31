@@ -8,14 +8,20 @@ The architecture and logic remain blockchain-based (4-of-7 threshold approval vo
 """
 import json
 import os
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from web3 import Web3
 from eth_account.messages import encode_defunct
 from datetime import datetime, timedelta
 import hashlib
 
 class BlockchainAuthService:
-    def __init__(self, contract_address: str, rpc_url: str = "http://127.0.0.1:7545"):
+    def __init__(
+        self,
+        contract_address: str,
+        rpc_url: str = "http://127.0.0.1:7545",
+        authorities: Optional[List[str]] = None,
+        threshold: int = 4,
+    ):
         """
         Initialize blockchain authentication service for threshold-based approval voting.
         
@@ -30,7 +36,7 @@ class BlockchainAuthService:
         """
         self.w3 = Web3(Web3.HTTPProvider(rpc_url))
         self.contract_address = contract_address
-        self.threshold = 4  # 4 out of 7 required
+        self.threshold = threshold  # expected threshold from deployment info
         
         # Load contract ABI (try multiple likely locations)
         abi_candidates = [
@@ -57,17 +63,89 @@ class BlockchainAuthService:
             address=Web3.to_checksum_address(contract_address),
             abi=self.contract_abi
         )
-        
-        # Authority addresses (same as deployed)
-        self.authorities = [
-            "0x8d4d6c34EDEA4E1eb2fc2423D6A091cdCB34DB48",
-            "0xfbe684383F81045249eB1E5974415f484E6F9f21",
-            "0xd2A2E096ef8313db712DFaB39F40229F17Fd3f94",
-            "0x57D14fF746d33127a90d4B888D378487e2C69f1f",
-            "0x0e852C955e5DBF7187Ec6ed7A3B131165C63cf9a",
-            "0x211Db7b2b475E9282B31Bd0fF39220805505Ff71",
-            "0x7FAdEAa4442bc60678ee16E401Ed80342aC24d16"
-        ]
+
+        # Validate deployed contract exists at address
+        code = self.w3.eth.get_code(Web3.to_checksum_address(contract_address))
+        if not code or code == b"\x00" or len(code) < 4:
+            raise Exception(
+                f"No contract code found at {contract_address}. "
+                "Update DEPLOYMENT_INFO.json with the latest deployed contract address."
+            )
+
+        # Validate on-chain threshold matches expected project threshold
+        try:
+            onchain_threshold = int(self.contract.functions.threshold().call())
+        except Exception as e:
+            raise Exception(f"Failed to read on-chain threshold(): {e}")
+
+        if onchain_threshold != int(self.threshold):
+            raise Exception(
+                f"KeyAuthority contract threshold mismatch: on-chain={onchain_threshold}, expected={self.threshold}. "
+                "Redeploy KeyAuthority with threshold=4 and update backend/blockchain/DEPLOYMENT_INFO.json."
+            )
+
+        # Lock to the on-chain threshold after validation
+        self.threshold = onchain_threshold
+
+        # Authority addresses: resolve from contract + Ganache accounts
+        self.authorities = self._resolve_authorities(authorities)
+
+        # Enforce 7-authority design for this project
+        if len(self.authorities) < 7:
+            raise Exception(
+                f"KeyAuthority contract has only {len(self.authorities)} authority account(s) available from Ganache, expected 7. "
+                "This usually means the contract was deployed with the wrong constructor authorities array or Ganache was restarted. "
+                "Redeploy with the first 7 Ganache accounts as authorities and update DEPLOYMENT_INFO.json."
+            )
+
+    def _resolve_authorities(self, preferred: Optional[List[str]]) -> List[str]:
+        """Pick authority addresses that are actually recognized by the contract.
+
+        This fixes the common case where Ganache is restarted (accounts change) or
+        DEPLOYMENT_INFO contains stale addresses.
+        """
+        preferred = preferred or []
+        preferred = [Web3.to_checksum_address(a) for a in preferred if isinstance(a, str) and a.startswith("0x")]
+
+        chain_accounts = []
+        try:
+            chain_accounts = [Web3.to_checksum_address(a) for a in (self.w3.eth.accounts or [])]
+        except Exception:
+            chain_accounts = []
+
+        # Prefer Ganache unlocked accounts that are authorities (these are transactable).
+        onchain_authority_accounts: List[str] = []
+        for addr in chain_accounts:
+            try:
+                if self.contract.functions.authorities(addr).call():
+                    onchain_authority_accounts.append(addr)
+            except Exception:
+                continue
+
+        # If deployment listed preferred authorities, keep those that are authorities too.
+        preferred_authorities: List[str] = []
+        for addr in preferred:
+            if addr in preferred_authorities:
+                continue
+            try:
+                if self.contract.functions.authorities(addr).call():
+                    preferred_authorities.append(addr)
+            except Exception:
+                continue
+
+        # Merge, favoring transactable Ganache accounts first.
+        merged: List[str] = []
+        for addr in onchain_authority_accounts + preferred_authorities:
+            if addr not in merged:
+                merged.append(addr)
+
+        return merged
+
+    def is_authority(self, address: str) -> bool:
+        try:
+            return self.contract.functions.authorities(Web3.to_checksum_address(address)).call()
+        except Exception:
+            return False
 
     def check_connection(self) -> bool:
         """Check if connected to blockchain"""
@@ -151,7 +229,7 @@ class BlockchainAuthService:
                 "current_approvals": approval_count,
                 "required_approvals": self.threshold,
                 "is_approved": is_approved,
-                "approval_percentage": int((approval_count / self.threshold) * 100)
+                "approval_percentage": int((approval_count / self.threshold) * 100) if self.threshold else 0
             }
         except Exception as e:
             return {
@@ -217,7 +295,7 @@ class BlockchainAuthService:
             print(f"Signature validation error: {e}")
             return False
 
-    def approve_key(self, key_id: str, authority_address: str) -> Optional[str]:
+    def approve_key(self, key_id: str, authority_address: str) -> Tuple[Optional[str], Optional[str]]:
         """
         Authority approves a key by calling the smart contract.
         
@@ -230,7 +308,7 @@ class BlockchainAuthService:
             authority_address: authority account address to send approval from
 
         Returns:
-            Transaction hash hex string on success, None on failure
+            (tx_hash_hex, error_message). On success: ("0x...", None). On failure: (None, "...").
         """
         try:
             key_bytes = bytes.fromhex(key_id.replace("0x", ""))
@@ -240,10 +318,11 @@ class BlockchainAuthService:
             })
             # Wait for receipt (Ganache mines instantly)
             receipt = self.w3.eth.wait_for_transaction_receipt(tx)
-            return receipt.transactionHash.hex()
+            return receipt.transactionHash.hex(), None
         except Exception as e:
-            print(f"approve_key error: {e}")
-            return None
+            msg = str(e)
+            print(f"approve_key error: {msg}")
+            return None, msg
 
     def get_authorities_info(self) -> List[dict]:
         """
@@ -280,6 +359,8 @@ def get_blockchain_service(contract_address: str = None) -> BlockchainAuthServic
     if _blockchain_service is None:
         # Try to load from deployment info in multiple locations
         if contract_address is None:
+            deploy_authorities: Optional[List[str]] = None
+            deploy_threshold: int = 4
             possible = [
                 os.path.join(os.path.dirname(__file__), 'DEPLOYMENT_INFO.json'),
                 os.path.join(os.path.dirname(__file__), 'DEPLOYMENT_INFO.TXT'),
@@ -294,6 +375,9 @@ def get_blockchain_service(contract_address: str = None) -> BlockchainAuthServic
                             try:
                                 deploy_info = json.load(f)
                                 contract_address = deploy_info.get('contractAddress')
+                                deploy_authorities = deploy_info.get('authorities')
+                                if isinstance(deploy_info.get('threshold'), int):
+                                    deploy_threshold = deploy_info['threshold']
                             except Exception:
                                 content = f.read()
                                 for line in content.splitlines():
@@ -312,6 +396,20 @@ def get_blockchain_service(contract_address: str = None) -> BlockchainAuthServic
         if contract_address is None:
             raise Exception('Contract address not found. Deploy contract first and ensure DEPLOYMENT_INFO exists.')
 
-        _blockchain_service = BlockchainAuthService(contract_address)
+        # If deployment file included authorities/threshold, pass them through.
+        try:
+            deploy_authorities  # type: ignore[name-defined]
+        except Exception:
+            deploy_authorities = None
+        try:
+            deploy_threshold  # type: ignore[name-defined]
+        except Exception:
+            deploy_threshold = 4
+
+        _blockchain_service = BlockchainAuthService(
+            contract_address,
+            authorities=deploy_authorities,
+            threshold=deploy_threshold,
+        )
     
     return _blockchain_service

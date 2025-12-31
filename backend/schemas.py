@@ -12,6 +12,18 @@ class LoginSchema(BaseModel):
     password: str
 
 
+class ChangePasswordSchema(BaseModel):
+    username: str
+    current_password: str
+    new_password: str
+
+
+class ForgotPasswordResetSchema(BaseModel):
+    username: str
+    recovery_code: str
+    new_password: str
+
+
 class UserRoleAssign(BaseModel):
     role: str
     department: str

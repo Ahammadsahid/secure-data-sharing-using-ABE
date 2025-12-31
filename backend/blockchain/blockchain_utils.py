@@ -3,7 +3,7 @@ import json
 import os
 
 GANACHE_URL = "http://127.0.0.1:7545"
-CONTRACT_ADDRESS = "0x85F05208B6C3613f42366dE27BAFBd4df40a8ceb"  # ✅ CORRECT CONTRACT ADDRESS
+CONTRACT_ADDRESS = "0x17030027A90F00fF2Ea8Fb4E0118285530bB5D5E"  # ✅ CORRECT CONTRACT ADDRESS
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 ABI_PATH = os.path.join(BASE_DIR, "contracts", "KeyAuthorityABI.json")

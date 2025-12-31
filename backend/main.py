@@ -32,7 +32,7 @@ def init_test_users():
             manager = User(
                 username="manager",
                 password=hash_password("manager123"),
-                role="admin",
+                role="manager",
                 department="IT",
                 clearance="high"
             )
@@ -43,7 +43,7 @@ def init_test_users():
             alice = User(
                 username="alice",
                 password=hash_password("alice123"),
-                role="user",
+                role="employee",
                 department="IT",
                 clearance="high"
             )
@@ -54,7 +54,7 @@ def init_test_users():
             bob = User(
                 username="bob",
                 password=hash_password("bob123"),
-                role="user",
+                role="accountant",
                 department="Finance",
                 clearance="medium"
             )
@@ -65,7 +65,7 @@ def init_test_users():
             charlie = User(
                 username="charlie",
                 password=hash_password("charlie123"),
-                role="user",
+                role="worker",
                 department="HR",
                 clearance="low"
             )

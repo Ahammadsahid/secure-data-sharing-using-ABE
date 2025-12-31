@@ -1,5 +1,5 @@
 {
-  "contractAddress": "0x[YOUR_CONTRACT_ADDRESS_FROM_REMIX]",
+  "contractAddress": "0x17030027A90F00fF2Ea8Fb4E0118285530bB5D5E",
   "deploymentMethod": "Remix IDE",
   "deploymentNote": "Contract deployed via Remix IDE due to local EVM compatibility issues. Update contractAddress with the address from Remix after deployment.",
   "network": "Ganache (localhost:7545)",

@@ -1,7 +1,9 @@
 import axios from "axios";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Admin() {
+  const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [roles, setRoles] = useState({
     admin: false,
@@ -10,6 +12,8 @@ export default function Admin() {
     employee: false,
     worker: false,
   });
+
+  const backendUrl = "http://127.0.0.1:8000";
 
   const upload = async () => {
     if (!file) {
@@ -35,7 +39,7 @@ export default function Admin() {
 
     try {
       const res = await axios.post(
-        "http://127.0.0.1:8000/files/upload",
+        `${backendUrl}/files/upload`,
         formData,
         {
           headers: {
@@ -51,28 +55,64 @@ export default function Admin() {
     }
   };
 
+
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Admin File Upload</h2>
+    <div className="page">
+      <div className="container">
+        <div className="panel">
+          <div className="panel__header">
+            <div>
+              <h1 className="panel__title">Admin upload</h1>
+              <p className="panel__subtitle">Upload an encrypted file with a role-based policy</p>
+            </div>
+          </div>
 
-      <input type="file" onChange={e => setFile(e.target.files[0])} />
+          <div className="section">
+            <div className="section__title">File</div>
+            <label htmlFor="admin-upload-file">Choose file</label>
+            <input
+              id="admin-upload-file"
+              type="file"
+              onChange={e => setFile(e.target.files[0])}
+            />
+            <p className="help">The backend encrypts the file and stores it with the selected access policy.</p>
+          </div>
 
-      <h4>Select Roles</h4>
-      {Object.keys(roles).map(r => (
-        <label key={r}>
-          <input
-            type="checkbox"
-            checked={roles[r]}
-            onChange={e =>
-              setRoles({ ...roles, [r]: e.target.checked })
-            }
-          />
-          {r}
-          <br />
-        </label>
-      ))}
+          <div className="section">
+            <div className="section__title">Policy</div>
+            <p className="help">Select one or more roles. The policy is built as: <span className="muted">role:A AND role:B ...</span></p>
 
-      <button onClick={upload}>Upload File</button>
+            <div className="grid grid--2">
+              {Object.keys(roles).map(r => (
+                <div key={r} className="stat">
+                  <label style={{ margin: 0, display: "flex", gap: 10, alignItems: "center" }}>
+                    <input
+                      type="checkbox"
+                      checked={roles[r]}
+                      onChange={e => setRoles({ ...roles, [r]: e.target.checked })}
+                    />
+                    <span style={{ fontWeight: 700, textTransform: "capitalize" }}>{r}</span>
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="section">
+            <button className="btn btn--block" onClick={upload}>
+              Upload file
+            </button>
+          </div>
+
+          <div className="section">
+            <div className="section__title">User management</div>
+            <p className="help">Create users, add admins, and reset passwords in a separate page.</p>
+            <button className="btn btn--secondary" onClick={() => navigate("/admin/users")}>
+              Go to user management
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,17 +1,20 @@
+
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 import mimetypes
 from sqlalchemy.orm import Session
 import io
-
+import os
+import shutil
 from backend.database import SessionLocal
 from backend.models import SecureFile, User
 from backend.aes.aes_utils import generate_aes_key, encrypt_file, decrypt_file
 from backend.abe.cpabe_utils import encrypt_aes_key, decrypt_aes_key
-from backend.storage.file_storage import save_encrypted_file, load_encrypted_file
+from backend.storage.file_storage import save_encrypted_file, load_encrypted_file, delete_encrypted_file
 from backend.blockchain.blockchain_auth import get_blockchain_service
 from backend.abe.abe_key_manager import get_abe_manager
 import json
+import base64
 
 # -------------------------------
 # Router
@@ -27,6 +30,22 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# =====================================================
+# LIST ALL FILES (for frontend display)
+# =====================================================
+@router.get("/all")
+def list_all_files(db: Session = Depends(get_db)):
+    files = db.query(SecureFile).all()
+    return [
+        {
+            "id": f.id,
+            "filename": f.filename,
+            "owner": f.owner,
+            "policy": f.policy
+        }
+        for f in files
+    ]
 
 # =====================================================
 # UPLOAD FILE (ADMIN ONLY)
@@ -54,13 +73,17 @@ async def upload_file(
 
     file_path = save_encrypted_file(iv + encrypted_data)
 
-    # Create DB record first to obtain file ID
+    # Encrypt the AES key with the policy using CP-ABE logic
+    encrypted_key_struct = encrypt_aes_key(aes_key, policy)
     secure_file = SecureFile(
         filename=file.filename,
         owner=username,
         file_path=file_path,
-        # placeholder - real shares stored on disk by ABE manager
-        encrypted_key=b"",
+        encrypted_key=json.dumps({
+            "encrypted_key": encrypted_key_struct["encrypted_key"].decode() if hasattr(encrypted_key_struct["encrypted_key"], 'decode') else base64.b64encode(encrypted_key_struct["encrypted_key"]).decode(),
+            "policy": encrypted_key_struct["policy"],
+            "fernet_key": encrypted_key_struct["fernet_key"].decode() if hasattr(encrypted_key_struct["fernet_key"], 'decode') else base64.b64encode(encrypted_key_struct["fernet_key"]).decode()
+        }).encode(),
         policy=policy
     )
 
@@ -75,13 +98,6 @@ async def upload_file(
         authorities = blockchain.authorities
 
         abe.split_key_to_shares(aes_key, str(secure_file.id), authorities)
-
-        # Store minimal marker in encrypted_key column (JSON) without exposing key material
-        marker = {"shares_stored": True, "file_id": str(secure_file.id)}
-        secure_file.encrypted_key = json.dumps(marker).encode()
-        db.add(secure_file)
-        db.commit()
-        db.refresh(secure_file)
     except Exception as e:
         # Cleanup on failure
         print(f"Error while splitting/storing shares: {e}")
@@ -113,12 +129,27 @@ def download_file(
     try:
         blockchain = get_blockchain_service()
         approval_status = blockchain.verify_approval(key_id)
-        # For local testing, allow if can't verify but approvals were simulated
         if not approval_status:
-            print(f"⚠️ Key {key_id} not approved on blockchain, but continuing for local testing...")
+            status = blockchain.get_approval_status(key_id)
+            raise HTTPException(
+                status_code=403,
+                detail={
+                    "reason": "not_approved_on_blockchain",
+                    "message": "Key has not reached the required authority-approval threshold on Ganache.",
+                    "approval_status": status,
+                },
+            )
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"⚠️ Blockchain error (continuing): {e}")
-        # Don't fail - allow local testing without full blockchain setup
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "reason": "blockchain_unavailable",
+                "message": "Blockchain approval check failed. Ensure Ganache is running and KeyAuthority is deployed.",
+                "error": str(e),
+            },
+        )
 
     attributes = {
         f"role:{user.role}",
@@ -135,8 +166,9 @@ def download_file(
     print(f"   File Policy: {secure_file.policy}")
 
     try:
+        import json
         aes_key = decrypt_aes_key(
-            eval(secure_file.encrypted_key.decode()),
+            json.loads(secure_file.encrypted_key.decode()),
             user_key
         )
         print(f"✅ Policy check passed!")
@@ -165,3 +197,44 @@ def download_file(
         media_type=mime_type,
         headers=headers
     )
+
+
+# =====================================================
+# DELETE FILE (ADMIN ONLY)
+# =====================================================
+@router.delete("/{file_id}")
+def delete_file(
+    file_id: int,
+    username: str,
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.username == username).first()
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    if user.role.lower() != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can delete files")
+
+    secure_file = db.query(SecureFile).filter(SecureFile.id == file_id).first()
+    if secure_file is None:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # Delete encrypted blob from disk (best-effort)
+    try:
+        delete_encrypted_file(secure_file.file_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete encrypted file blob: {str(e)}")
+
+    # Delete any stored shares for this file (best-effort)
+    try:
+        shares_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "storage", "shares", str(file_id)))
+        if os.path.isdir(shares_dir):
+            shutil.rmtree(shares_dir, ignore_errors=True)
+    except Exception:
+        # Shares are not required for runtime correctness; don't block deletion.
+        pass
+
+    db.delete(secure_file)
+    db.commit()
+
+    return {"message": "File deleted successfully", "file_id": file_id}

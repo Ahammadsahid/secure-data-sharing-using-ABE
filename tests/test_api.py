@@ -4,14 +4,14 @@ BASE_URL = "http://127.0.0.1:8000"
 
 def test_register_login():
     r = requests.post(
-        f"{BASE_URL}/auth/register",
-        json={"username": "testuser9", "password": "testpass"}
+        f"{BASE_URL}/register",
+        json={"username": "testuser9", "password": "testpass", "role": "employee"}
     )
-    assert r.status_code in [200, 400]
+    assert r.status_code == 403
 
     r = requests.post(
-        f"{BASE_URL}/auth/login",
-        json={"username": "testuser9", "password": "testpass"}
+        f"{BASE_URL}/login",
+        json={"username": "admin", "password": "admin123"}
     )
     assert r.status_code == 200
 
