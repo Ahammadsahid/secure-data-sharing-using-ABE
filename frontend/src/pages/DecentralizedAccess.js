@@ -104,9 +104,9 @@ export default function DecentralizedAccess() {
         authority_addresses: approvers
       });
 
-      setMessage(`✅ Submitted ${approvers.length} approval transactions on Ganache`);
+      setMessage(`Submitted ${approvers.length} approval transactions on Ganache`);
     } catch (error) {
-      setMessage('❌ Error simulating approvals: ' + (error.response?.data?.detail?.message || error.response?.data?.detail || error.message));
+      setMessage('Error simulating approvals: ' + (error.response?.data?.detail?.message || error.response?.data?.detail || error.message));
     } finally {
       setLoading(false);
     }
@@ -115,7 +115,7 @@ export default function DecentralizedAccess() {
   const decryptFile = async () => {
     const keyId = localStorage.getItem('current_key_id');
     if (!keyId || userApprovals.length < 4) {
-      setMessage('⚠️ Need at least 4 approvals to decrypt');
+      setMessage('Need at least 4 approvals to decrypt');
       return;
     }
 
@@ -128,12 +128,12 @@ export default function DecentralizedAccess() {
       });
 
       if (response.data.decrypted) {
-        setMessage(`✅ File decrypted successfully! Key: ${response.data.decryption_key?.substring(0, 16)}...`);
+        setMessage(`File decrypted successfully. Key: ${response.data.decryption_key?.substring(0, 16)}...`);
       } else {
-        setMessage('❌ ' + response.data.message);
+        setMessage(response.data.message);
       }
     } catch (error) {
-      setMessage('❌ Decryption failed: ' + error.response?.data?.detail);
+      setMessage('Decryption failed: ' + error.response?.data?.detail);
     } finally {
       setLoading(false);
     }

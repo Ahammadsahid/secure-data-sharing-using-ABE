@@ -158,24 +158,13 @@ def download_file(
     }
 
     user_key = {"attributes": attributes}
-    
-    print(f"📋 Download Attempt:")
-    print(f"   User: {username}")
-    print(f"   User Attributes: {attributes}")
-    print(f"   File ID: {file_id}")
-    print(f"   File Policy: {secure_file.policy}")
 
     try:
-        import json
         aes_key = decrypt_aes_key(
             json.loads(secure_file.encrypted_key.decode()),
             user_key
         )
-        print(f"✅ Policy check passed!")
     except Exception as e:
-        print(f"❌ ABE Decryption Error: {e}")
-        print(f"   User attributes: {attributes}")
-        print(f"   File policy: {secure_file.policy}")
         raise HTTPException(status_code=403, detail=f"Access denied by policy: {str(e)}")
 
     encrypted_blob = load_encrypted_file(secure_file.file_path)

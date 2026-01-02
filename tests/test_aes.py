@@ -2,8 +2,6 @@ import time
 from backend.aes.aes_utils import generate_aes_key, encrypt_file, decrypt_file
 
 def test_aes():
-    print("🔐 AES TEST STARTED")
-
     data = b"This is a test file"
     key = generate_aes_key()
 
@@ -14,8 +12,7 @@ def test_aes():
 
     assert decrypted == data
 
-    print("✅ AES encryption & decryption PASSED")
-    print(f"⏱ Encryption Time: {end - start:.6f} seconds")
+    assert (end - start) >= 0
 
 if __name__ == "__main__":
     test_aes()

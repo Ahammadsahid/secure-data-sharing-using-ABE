@@ -88,11 +88,11 @@ export default function Download() {
       const statusRes = await axios.get(`${API_BASE}/api/access/approval-status/${keyId}`);
       if (statusRes.data?.is_approved) {
         setApprovalStatus("approved");
-        alert(`✅ Approved on Ganache (${statusRes.data.current_approvals}/${statusRes.data.required_approvals}).`);
+        alert(`Approved on Ganache (${statusRes.data.current_approvals}/${statusRes.data.required_approvals}).`);
       } else {
         setApprovalStatus("pending");
         alert(
-          `⚠️ Not approved on Ganache yet (${statusRes.data?.current_approvals || 0}/${statusRes.data?.required_approvals || 4}).`
+          `Not approved on Ganache yet (${statusRes.data?.current_approvals || 0}/${statusRes.data?.required_approvals || 4}).`
         );
       }
     } catch (err) {
@@ -102,7 +102,7 @@ export default function Download() {
       if (detail?.reason === "approval_transactions_failed" && Array.isArray(detail?.results)) {
         const failed = detail.results.filter((r) => !r.tx_hash);
         alert(
-          `❌ Approvals failed for ${failed.length} authority(s).\n` +
+          `Approvals failed for ${failed.length} authority(s).\n` +
             failed.map((f) => `${f.authority}: ${f.error || "failed"}`).join("\n")
         );
       } else {
@@ -149,10 +149,10 @@ export default function Download() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      alert("✅ File downloaded and decrypted successfully!");
+      alert("File downloaded successfully.");
       setSignatureVerified(false); // Reset after download
     } catch (err) {
-      alert("❌ " + (formatDetail(err.response?.data?.detail) || "Download failed. Check access policy or approvals."));
+      alert(formatDetail(err.response?.data?.detail) || "Download failed. Check access policy or approvals.");
     } finally {
       setDownloading(false);
     }

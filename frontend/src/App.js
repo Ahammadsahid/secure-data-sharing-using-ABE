@@ -15,7 +15,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/change-password" element={<ChangePassword />} />
 
@@ -24,7 +23,6 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/access" element={<DecentralizedAccess />} />
 
-        {/* 🔥 MISSING ROUTES FIXED */}
         <Route path="/upload" element={<Upload />} />
         <Route path="/download" element={<Download />} />
       </Routes>
