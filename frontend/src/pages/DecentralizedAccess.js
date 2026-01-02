@@ -185,26 +185,11 @@ export default function DecentralizedAccess() {
           </div>
 
           <div className="section">
-            <div className="section__title">Authorities</div>
-            <p className="help">Requires 4 out of 7 approvals to decrypt.</p>
-            <div className="grid grid--2">
-              {authorities.map((auth, idx) => (
-                <div key={`${auth.address}-${idx}`} className="stat">
-                  <div className="stat__label">Authority {idx + 1}</div>
-                  <div
-                    className="stat__value"
-                    style={{
-                      fontFamily:
-                        "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-                    }}
-                  >
-                    {auth.address.substring(0, 12)}...
-                  </div>
-                  <p className="help" style={{ marginTop: 8 }}>
-                    {auth.is_authority ? <span className="badge badge--success">Active</span> : <span className="badge badge--warning">Inactive</span>}
-                  </p>
-                </div>
-              ))}
+            <div className="section__title">Approvals</div>
+            <p className="help">Requires 4 out of 7 authority approvals to decrypt.</p>
+            <div className="stat">
+              <div className="stat__label">Authorities available</div>
+              <div className="stat__value">{authorities.length}/7</div>
             </div>
           </div>
 

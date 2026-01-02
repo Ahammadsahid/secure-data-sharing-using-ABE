@@ -360,41 +360,6 @@ export default function Download() {
             </div>
           </div>
 
-          {keyId ? (
-            <div className="section">
-              <div className="section__title">Blockchain details</div>
-              <div className="grid grid--2">
-                <div className="stat">
-                  <div className="stat__label">Key ID</div>
-                  <div className="stat__value" style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace", wordBreak: "break-all" }}>
-                    {keyId}
-                  </div>
-                </div>
-                <div className="stat">
-                  <div className="stat__label">Authorities</div>
-                  <div className="stat__value">{authorities.length}/7</div>
-                  <div style={{ marginTop: 10, maxHeight: 160, overflowY: "auto" }}>
-                    {authorities.map((a, i) => (
-                      <div
-                        key={a}
-                        className="muted"
-                        style={{
-                          padding: "6px 0",
-                          borderBottom: i < authorities.length - 1 ? "1px solid var(--border)" : "none",
-                          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-                          fontSize: 12,
-                          wordBreak: "break-all",
-                        }}
-                      >
-                        {i + 1}. {a}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
           <div className="section">
             <div className="section__title">Security note</div>
             <p className="muted" style={{ margin: 0 }}>
