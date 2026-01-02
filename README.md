@@ -38,11 +38,11 @@ cd frontend && npm install && npm start
 
 | # | Document | Time | Purpose |
 |---|----------|------|---------|
-| 1️⃣ | [**QUICK_REFERENCE.md**](QUICK_REFERENCE.md) | 5 min | Overview + quick commands |
-| 2️⃣ | [**PROJECT_COMPLETION_SUMMARY.md**](PROJECT_COMPLETION_SUMMARY.md) | 10 min | What's implemented |
-| 3️⃣ | [**COMPLETE_IMPLEMENTATION_GUIDE.md**](COMPLETE_IMPLEMENTATION_GUIDE.md) | 30 min | Full step-by-step guide |
-| 4️⃣ | [**VS_CODE_SETUP_GUIDE.md**](VS_CODE_SETUP_GUIDE.md) | 15 min | VS Code integration |
-| 5️⃣ | [**REMIX_DEPLOYMENT_GUIDE.md**](REMIX_DEPLOYMENT_GUIDE.md) | 10 min | Deploy smart contract |
+| 1️⃣ | [**QUICK_REFERENCE.md**](docs/root-guides/QUICK_REFERENCE.md) | 5 min | Overview + quick commands |
+| 2️⃣ | [**PROJECT_COMPLETION_SUMMARY.md**](docs/root-guides/PROJECT_COMPLETION_SUMMARY.md) | 10 min | What's implemented |
+| 3️⃣ | [**COMPLETE_IMPLEMENTATION_GUIDE.md**](docs/root-guides/COMPLETE_IMPLEMENTATION_GUIDE.md) | 30 min | Full step-by-step guide |
+| 4️⃣ | [**VS_CODE_SETUP_GUIDE.md**](docs/root-guides/VS_CODE_SETUP_GUIDE.md) | 15 min | VS Code integration |
+| 5️⃣ | [**REMIX_DEPLOYMENT_GUIDE.md**](docs/root-guides/REMIX_DEPLOYMENT_GUIDE.md) | 10 min | Deploy smart contract |
 
 ---
 
