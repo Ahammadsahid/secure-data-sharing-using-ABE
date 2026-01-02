@@ -1,33 +1,35 @@
-# 🚀 Quick Start Guide - Secure Data Sharing
+# Quick start
 
-## ⚡ 3-Minute Setup
+This is a short local setup guide for running the project.
 
-### Terminal 1: Start Backend
+## Start the backend
 ```bash
 cd "c:\7th sem\CAPSTON PROJECT\code\secure-data-sharing"
 python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
-✅ Wait for: `INFO: Uvicorn running on http://127.0.0.1:8000`
+
+Wait for Uvicorn to start: `Uvicorn running on http://127.0.0.1:8000`
 
 ---
 
-### Terminal 2: Start Frontend
+## Start the frontend
 ```bash
 cd "c:\7th sem\CAPSTON PROJECT\code\secure-data-sharing\frontend"
 npm start
 ```
-✅ Browser opens: `http://localhost:3000`
+
+Open: `http://localhost:3000`
 
 ---
 
-## 🧪 Test the Full Flow (5 Minutes)
+## Test the flow
 
-### Step 1: Login as Admin
+### Step 1: Login as admin
 - **Username:** `admin`
 - **Password:** `admin123`
 - **Click:** Login
 
-### Step 2: Upload a Secure File
+### Step 2: Upload a file
 1. Click **Upload** tab
 2. Choose any file (test.txt, image.jpg, etc.)
 3. Select attributes:
@@ -37,70 +39,70 @@ npm start
 4. Click **Upload Secure File**
 5. **Save the File ID** (shown in success alert)
 
-### Step 3: Logout & Login as Different User
+### Step 3: Login as a different user
 - Click **Logout**
 - **Username:** `alice`
 - **Password:** `alice123`
 - Click **Login**
 
-### Step 4: Download the File
+### Step 4: Download the file
 1. Click **Download** tab
 2. Enter **File ID** from Step 2
 3. Username auto-fills with `alice`
-4. Click **Request Approval** 🔑
-   - Shows: Key ID and 7 authorities
-5. Click **Simulate Approvals (local)** ⚡
-   - Sends 4 approvals to blockchain
-6. Click **Download Decrypted File** 📥
-   - **File downloads successfully!** ✅
+4. Click **Request Approval**
+   - Shows the Key ID and authority list
+5. Click **Simulate Approvals (local)**
+   - Sends approval transactions to Ganache
+6. Click **Download Decrypted File**
+   - The browser downloads the decrypted file
 
 ---
 
-## ✅ What You Should See
+## What you should see
 
-### Upload Success:
+### Upload success
 ```
-✅ File uploaded successfully!
+File uploaded successfully
 File ID: 1
 ```
 
-### Download Success:
+### Download success
 ```
-Step 1: ✅ Request Approval
-Step 2: ✅ Simulate Approvals (local)  
-Step 3: ✅ Download Decrypted File
+Step 1: Request Approval
+Step 2: Simulate Approvals (local)
+Step 3: Download Decrypted File
 
-📥 Browser downloads: secure_file_1
+Browser downloads: secure_file_1
 ```
 
 ---
 
-## 🧑‍💻 Test Users
+## Test users
 
-Copy-paste these credentials:
+These users are created on backend startup for local testing.
 
-### Admin (Can Upload)
+### Admin
 ```
 Username: admin
 Password: admin123
 Role: Admin | Dept: IT | Clearance: High
 ```
 
-### IT User (Can Download)
+### IT user
 ```
 Username: alice
 Password: alice123
 Role: User | Dept: IT | Clearance: High
 ```
 
-### Finance User (Cannot Access IT Files)
+### Finance user
 ```
 Username: bob
 Password: bob123
 Role: User | Dept: Finance | Clearance: Medium
 ```
 
-### HR User (Cannot Access Anything)
+### HR user
 ```
 Username: charlie
 Password: charlie123

@@ -1,60 +1,41 @@
-# KeyAuthority Smart Contract - Deployment Guide
+# KeyAuthority contract deployment (Remix + Ganache)
 
-## Error: Internal JSON-RPC Error (Gas Issues)
+This project expects a KeyAuthority contract deployed on a local Ganache chain.
+The backend reads the contract address (and authority list) from `backend/blockchain/DEPLOYMENT_INFO.json`.
 
-### **Quick Fix in Remix:**
+## Prerequisites
 
-#### Step 1: Set Gas Limit
-1. In Remix, click on the "Deploy & Run Transactions" tab (bottom left)
-2. Look for "GAS LIMIT" field
-3. Change it from default (~3,000,000) to **8,000,000**
-4. Look for "GAS PRICE" - Ganache default is **2 gwei** ✓
-
-#### Step 2: Enter Constructor Parameters
-1. Find the input field that says "address[]" (authorities)
-2. Copy-paste this array in JSON format:
-```json
-["0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2","0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db","0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB","0x617F2E2fD72FD9D5503197092aC168c91465E7f2","0x17F6AD8Ef982297579C203069C1DbfFE4348c372","0x5c6B0f7Bf3E7ce046039Bd8FABdfD3f9F5021678"]
-```
-
-3. For "uint" (threshold), enter: **4**
-
-#### Step 3: Deploy
-1. Click the orange "Deploy" button
-2. Wait for confirmation in Ganache terminal
-3. Should see "creation of KeyAuthority" ✓
-
----
-
-## Verification Checklist
-
-- [ ] Ganache running on `127.0.0.1:7545`
-- [ ] MetaMask connected to Ganache network
-- [ ] Remix shows correct Solidity version (0.8.20)
-- [ ] Gas Limit set to 8,000,000
-- [ ] Constructor params provided (authorities array + threshold = 4)
-- [ ] Account has sufficient ETH balance (Ganache gives 100 ETH by default)
-
----
-
-## Alternative: Using Hardhat Script
-
-If you have Hardhat/Node.js set up:
+1. Start Ganache:
 
 ```bash
-npx hardhat run scripts/deploy.js --network ganache
+ganache-cli --accounts 7 --deterministic --host 127.0.0.1 --port 7545
 ```
 
-This handles all parameters automatically.
+2. Ensure MetaMask is connected to the Ganache network (RPC `http://127.0.0.1:7545`, chain id `1337`).
 
----
+## Deploy via Remix
 
-## Common Issues
+1. Open https://remix.ethereum.org
+2. Open `contracts/KeyAuthority.sol` (copy/paste into Remix if needed)
+3. Compile with Solidity 0.8.x
+4. Deploy & Run Transactions:
+	 - Environment: Injected Provider (MetaMask)
+	 - Gas limit: increase if deployment fails (e.g. 8,000,000)
+	 - Constructor args:
+		 - `authorities`: use the `authorities` array from `backend/blockchain/DEPLOYMENT_INFO.json`
+		 - `threshold`: `4`
+5. Deploy, then copy the deployed contract address.
 
-| Issue | Solution |
-|-------|----------|
-| "Not enough gas" | Increase GAS LIMIT to 8,000,000+ |
-| "Invalid parameters" | Ensure authorities is a proper JSON array |
-| "Network error" | Check Ganache is running and MetaMask RPC is correct |
-| "Account locked" | Unlock MetaMask account |
+## Update the backend config
+
+Edit `backend/blockchain/DEPLOYMENT_INFO.json` and set:
+- `contractAddress` to the address you deployed
+
+Restart the backend after updating the address.
+
+## Common issues
+
+- Not enough gas: increase Remix gas limit.
+- Wrong chain: verify MetaMask is pointed at Ganache.
+- Backend says `contract_misconfigured`: contract address/ABI mismatch; redeploy and update `DEPLOYMENT_INFO.json`.
 

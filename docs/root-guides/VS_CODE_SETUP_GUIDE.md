@@ -1,5 +1,6 @@
-# Secure Data Sharing - Complete Setup Guide
-# Remix + Ganache + MetaMask Integration in VS Code
+# Setup guide (VS Code)
+
+This is a practical setup checklist for running the app and deploying the contract locally.
 
 ## **Step 1: Install VS Code Extensions**
 
@@ -70,10 +71,10 @@ remixd -s . --port 65521
 ## **Step 6: Test End-to-End**
 
 1. Open http://localhost:3000 (Frontend)
-2. Register with attributes: `role:admin,department:IT,clearance:top-secret`
-3. Upload a file with ABE policy
-4. Get key approvals from 4 authorities
-5. Download and decrypt file
+2. Log in with a test user (seeded by the backend) or create users from the admin UI.
+3. Upload a file with an attribute policy
+4. Request approvals and collect 4 approvals
+5. Download and decrypt the file
 
 ## **Troubleshooting**
 

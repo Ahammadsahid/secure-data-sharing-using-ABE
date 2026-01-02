@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,7 +10,9 @@ from backend.api.access_routes import router as access_router
 from backend.models import User
 from backend.auth.routes import hash_password
 
-# 🔥 THIS LINE CREATES TABLES
+logger = logging.getLogger("backend")
+
+# Create tables
 Base.metadata.create_all(bind=engine)
 
 # Initialize test users on startup
@@ -72,14 +76,9 @@ def init_test_users():
             db.add(charlie)
         
         db.commit()
-        print("✅ Test users initialized successfully!")
-        print("   - admin/admin123 (IT, high)")
-        print("   - manager/manager123 (IT, high)")
-        print("   - alice/alice123 (IT, high)")
-        print("   - bob/bob123 (Finance, medium)")
-        print("   - charlie/charlie123 (HR, low)")
+        logger.info("Test users initialized")
     except Exception as e:
-        print(f"⚠️ Error initializing test users: {e}")
+        logger.warning("Error initializing test users: %s", e)
     finally:
         db.close()
 
@@ -87,8 +86,8 @@ def init_test_users():
 init_test_users()
 
 app = FastAPI(
-    title="Secure Data Sharing - Decentralized",
-    description="ABE + Blockchain Authentication for Secure File Sharing",
+    title="Secure Data Sharing API",
+    description="Secure file sharing with attribute policies and a local blockchain approval flow.",
     version="2.0"
 )
 

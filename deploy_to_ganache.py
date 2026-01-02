@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""
-Ganache Deployment Script - Enhanced Version
-Deploys KeyAuthority contract directly from Solidity source via web3
+"""Deploy KeyAuthority settings for local Ganache.
+
+This script does not compile Solidity. It helps you save the deployed contract
+address and related metadata to `backend/blockchain/DEPLOYMENT_INFO.json`.
 """
 
 import json
@@ -12,7 +13,7 @@ from pathlib import Path
 try:
     from web3 import Web3
 except ImportError:
-    print("❌ Missing dependencies. Install with: pip install web3")
+    print("Missing dependency: web3. Install with: pip install web3")
     sys.exit(1)
 
 # Configuration
@@ -35,15 +36,15 @@ THRESHOLD = 4
 
 def connect_to_ganache():
     """Connect to Ganache"""
-    print(f"🔗 Connecting to Ganache at {GANACHE_RPC}...")
+    print(f"Connecting to Ganache at {GANACHE_RPC}...")
     w3 = Web3(Web3.HTTPProvider(GANACHE_RPC))
     
     if not w3.is_connected():
-        print("❌ Cannot connect to Ganache! Is it running?")
-        print(f"   Start Ganache with: ganache-cli --host 127.0.0.1 --port 7545")
+        print("Cannot connect to Ganache. Is it running?")
+        print("Start Ganache with: ganache-cli --host 127.0.0.1 --port 7545")
         sys.exit(1)
     
-    print("✅ Connected to Ganache")
+    print("Connected")
     return w3
 
 def deploy_with_remix_bytecode(w3):
@@ -51,27 +52,12 @@ def deploy_with_remix_bytecode(w3):
     Alternative: Use pre-compiled bytecode from Remix
     Get bytecode from Remix: Solidity Compiler → Compilation Details → Bytecode
     """
-    print("\n⚠️  ALTERNATIVE: Using Remix-compiled bytecode")
-    print("    This is faster and doesn't require solc compiler")
-    print("\n📋 STEPS:")
-    print("    1. Open Remix IDE: https://remix.ethereum.org")
-    print("    2. Create/paste KeyAuthority.sol")
-    print("    3. Compile (left side, Solidity Compiler)")
-    print("    4. Click 'Compilation Details'")
-    print("    5. Copy the entire 'Bytecode' (looks like 0x608060...)")
-    print("    6. Paste it in the script or save to contracts/KeyAuthority.bin")
-    print("\n    For now, use the Remix GUI to deploy:")
-    print("    - Environment: Injected Provider - MetaMask")
-    print("    - Contract: KeyAuthority")
-    print("    - Constructor args: [authorities], 4")
-    print("    - Gas limit: 5000000")
-    print("    - Deploy and copy contract address")
-    print("\n    Then run this to save the address:")
+    print("\nAlternative: deploy in Remix and paste the deployed address here.")
     
-    contract_addr = input("\n💾 Paste deployed contract address (0x...): ").strip()
+    contract_addr = input("\nPaste deployed contract address (0x...): ").strip()
     
     if not contract_addr.startswith("0x") or len(contract_addr) != 42:
-        print("❌ Invalid address format")
+        print("Invalid address format")
         sys.exit(1)
     
     save_deployment_info(contract_addr, {"contractAddress": contract_addr})
@@ -101,24 +87,23 @@ def save_deployment_info(contract_address, receipt=None):
     with open(DEPLOYMENT_INFO_PATH, 'w') as f:
         json.dump(deployment_info, f, indent=2)
     
-    print(f"\n✅ Deployment info saved to {DEPLOYMENT_INFO_PATH}")
+    print(f"\nDeployment info saved to {DEPLOYMENT_INFO_PATH}")
     print(json.dumps(deployment_info, indent=2))
 
 def main():
     print("=" * 70)
-    print("🚀 KeyAuthority Contract Deployment to Ganache")
+    print("KeyAuthority contract settings (Ganache)")
     print("=" * 70)
     
     w3 = connect_to_ganache()
     
     print("\n" + "=" * 70)
-    print("📌 RECOMMENDED: Use Remix GUI + This Script to Save Address")
+    print("Recommended: deploy via Remix and save the contract address")
     print("=" * 70)
-    print("\nBecause compiling Solidity requires solc (complex to install),")
-    print("it's EASIEST to:")
+    print("\nThis script focuses on saving the address used by the backend:")
     print("  1. Deploy via Remix GUI (you already did this)")
     print("  2. Copy the deployed contract address")
-    print("  3. Paste it below to save to backend\n")
+    print("  3. Paste it below to save to the backend\n")
     
     choice = input("Do you already have a deployed contract address? (y/n): ").strip().lower()
     
@@ -128,7 +113,7 @@ def main():
             deploy_with_remix_bytecode.__doc__ = None  # Hide the function
             save_deployment_info(addr)
             print("\n" + "=" * 70)
-            print("✅ Contract address saved successfully!")
+            print("Contract address saved")
             print("=" * 70)
             print("\nNow you can:")
             print("1. Start backend: python -m uvicorn backend.main:app --reload")
@@ -137,7 +122,7 @@ def main():
             print("\n" + "=" * 70)
             return
         else:
-            print("❌ Invalid address")
+            print("Invalid address")
             sys.exit(1)
     else:
         print("\n📍 MANUAL DEPLOYMENT VIA REMIX:")

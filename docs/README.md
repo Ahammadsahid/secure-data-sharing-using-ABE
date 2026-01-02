@@ -1,28 +1,16 @@
-# Secure Data Sharing Using ABE
+# Documentation
 
-This project implements secure data sharing using Attribute-Based Encryption (ABE). It includes a backend (FastAPI, SQLAlchemy), frontend (React), and smart contracts for key authority.
+This folder contains the project documentation used for the capstone.
 
-## Structure
-- **backend/**: FastAPI server, database, encryption modules
-- **frontend/**: React app for user interaction
-- **contracts/**: Smart contract for key authority
-- **docs/**: Documentation and reports
+## Recommended reading order
 
-## Features
-- User registration and authentication
-- File encryption/decryption (AES, CP-ABE)
-- Blockchain-based key management
-- Secure file storage and sharing
+1. `root-guides/QUICK_START.md`
+2. `root-guides/QUICK_REFERENCE.md`
+3. `root-guides/TESTING_GUIDE.md`
+4. `root-guides/REMIX_DEPLOYMENT_GUIDE.md`
+5. `root-guides/VS_CODE_SETUP_GUIDE.md`
 
-## Setup
-1. Install dependencies for backend and frontend
-2. Configure environment variables
-3. Run backend and frontend servers
+## Notes
 
-## Usage
-- Register and login as a user
-- Upload and share encrypted files
-- Admin can manage keys and policies
-
-## License
-MIT
+- Public self-registration is disabled; accounts are created by an admin.
+- Contract deployment details live in `backend/blockchain/DEPLOYMENT_INFO.json`.

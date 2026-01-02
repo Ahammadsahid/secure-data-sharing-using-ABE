@@ -1,83 +1,36 @@
-# 🎉 PROJECT COMPLETE - READ THIS FIRST!
+# Start here
 
-## **Your Capstone Project is Now 100% Complete!**
+If you’re new to the repo, start with the main README and the quick-start docs:
 
-You now have a **professional-grade**, **enterprise-ready** implementation of:
-- ✅ Decentralized Access Control
-- ✅ Attribute-Based Encryption (ABE)  
-- ✅ Blockchain Authentication (4-of-7 Threshold)
-- ✅ Smart Contracts
-- ✅ MetaMask Integration
-- ✅ Complete REST API
-- ✅ Beautiful React Frontend
-- ✅ Comprehensive Documentation
+- `README.md`
+- `docs/root-guides/QUICK_START.md`
+- `docs/root-guides/TESTING_GUIDE.md`
 
----
+## Local run (summary)
 
-## **🚀 Get Started in 30 Seconds**
+1) Ganache
 
-### **Windows Users:**
-```batch
-START_EVERYTHING.bat
-```
-
-### **macOS/Linux Users:**
 ```bash
-# Terminal 1
 ganache-cli --accounts 7 --deterministic --host 127.0.0.1 --port 7545
-
-# Terminal 2
-cd backend && pip install -r requirements.txt && python -m uvicorn main:app --reload --port 8000
-
-# Terminal 3
-cd frontend && npm install && npm start
-
-# Browser: https://remix.ethereum.org (to deploy contract)
 ```
 
----
+2) Deploy the contract and update `backend/blockchain/DEPLOYMENT_INFO.json`
 
-## **📚 Read These Files (In Order)**
+3) Backend
 
-| # | File | Time | What You'll Learn |
-|---|------|------|-------------------|
-| 1 | **QUICK_REFERENCE.md** | 5 min | How everything works |
-| 2 | **PROJECT_COMPLETION_SUMMARY.md** | 10 min | What was built |
-| 3 | **VISUAL_SUMMARY.md** | 15 min | Architecture & flows |
-| 4 | **COMPLETE_IMPLEMENTATION_GUIDE.md** | 30 min | Full step-by-step |
-| 5 | **CHECKLIST.md** | 10 min | Verify completion |
+```bash
+cd backend
+python -m pip install -r requirements.txt
+python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
 
----
+4) Frontend
 
-## **✨ What You Have**
-
-### **3 New Backend Services**
-1. **`blockchain_auth.py`** (300 lines)
-   - Connects to Ganache
-   - Manages 7 authorities
-   - Handles 4-of-7 approvals
-   - Verifies blockchain status
-
-2. **`abe_key_manager.py`** (400 lines)
-   - Splits keys into 7 shares
-   - Uses Shamir's Secret Sharing
-   - Reconstructs from 4 shares
-   - Verifies attribute policies
-
-3. **`access_routes.py`** (350 lines)
-   - 7 REST API endpoints
-   - Decentralized access control
-   - File encryption/decryption
-   - Real-time approval tracking
-
-### **2 New Frontend Components**
-1. **`DecentralizedAccess.js`** (200 lines)
-   - Beautiful UI for access control
-   - Shows 7 authorities
-   - Real-time approval progress
-   - Decrypt functionality
-
-2. **`DecentralizedAccess.css`** (300 lines)
+```bash
+cd frontend
+npm install
+npm start
+```
    - Professional purple gradient theme
    - Responsive mobile design
    - Smooth animations

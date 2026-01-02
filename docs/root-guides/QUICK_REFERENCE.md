@@ -1,6 +1,6 @@
-# 🚀 Quick Reference - Secure Data Sharing System
+# Quick reference
 
-## **4 Commands to Start Everything**
+## Start services
 
 ```bash
 # Terminal 1: Start Ganache Blockchain
@@ -18,15 +18,15 @@ cd frontend && npm install && npm start
 
 ---
 
-## **Key Components**
+## Key components
 
-### **1️⃣ Blockchain (Ganache + Smart Contract)**
+### Blockchain (Ganache + smart contract)
 - **Port**: 7545
 - **Network ID**: 1337
 - **Accounts**: 7 authorities with 100 ETH each
 - **Contract**: KeyAuthority (4-of-7 approval)
 
-### **2️⃣ Backend (FastAPI)**
+### Backend (FastAPI)
 - **Port**: 8000
 - **Docs**: http://localhost:8000/docs
 - **Main Features**:
@@ -35,40 +35,38 @@ cd frontend && npm install && npm start
   - File Encryption/Decryption
   - Access Control API
 
-### **3️⃣ Frontend (React)**
+### Frontend (React)
 - **Port**: 3000
 - **Pages**:
-  - `/login` - User authentication
-  - `/register` - User registration
-  - `/upload` - File upload with ABE policy
-  - `/access` - Decentralized access control
-  - `/download` - File download and decryption
+  - `/login` - authentication
+  - `/upload` - upload with a policy
+  - `/access` - approval + decrypt flow
+  - `/download` - download/decrypt UI
+
+Note: self-registration is disabled; accounts are created by an admin.
 
 ---
 
-## **Complete Workflow**
+## Workflow summary
 
 ```
-1. REGISTER USER
-   └─→ Set attributes (role, department, clearance)
-
-2. UPLOAD FILE
+1. UPLOAD FILE
    └─→ Encrypt with ABE policy
    └─→ Split key into 4-of-7 shares
    └─→ Distribute to 7 authorities
 
-3. REQUEST APPROVAL
+2. REQUEST APPROVAL
    └─→ Create blockchain key ID
    └─→ Authorities receive approval request
    └─→ Monitor approval percentage
 
-4. COLLECT APPROVALS (4 needed)
+3. COLLECT APPROVALS (4 needed)
    └─→ Authority 1 approves ✅
    └─→ Authority 2 approves ✅
    └─→ Authority 3 approves ✅
    └─→ Authority 4 approves ✅ [THRESHOLD MET]
 
-5. DECRYPT FILE
+4. DECRYPT FILE
    └─→ Reconstruct key from 4 shares
    └─→ Decrypt file content
    └─→ Download plaintext
@@ -76,7 +74,7 @@ cd frontend && npm install && npm start
 
 ---
 
-## **API Quick Reference**
+## API quick reference
 
 ### **Check Blockchain Connection**
 ```bash

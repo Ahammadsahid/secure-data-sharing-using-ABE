@@ -1,14 +1,15 @@
-# 🚀 Complete End-to-End Testing Guide
+# End-to-end testing guide
 
-## ✅ System Status
-- **Backend**: Running on `http://127.0.0.1:8000`
-- **Contract Address**: `0x126d0D3B866D7ebb5856722B722Bc795a17AD1Ce`
-- **Ganache RPC**: `http://127.0.0.1:7545`
-- **Database**: SQLite (initialized with test users)
+## System status
+
+- Backend: `http://127.0.0.1:8000`
+- Ganache RPC: `http://127.0.0.1:7545`
+- Contract address: read from `backend/blockchain/DEPLOYMENT_INFO.json`
+- Database: SQLite (local)
 
 ---
 
-## 👤 Test Users (Ready to Use)
+## Test users
 
 | Username | Password | Role | Department | Clearance |
 |----------|----------|------|------------|-----------|
@@ -19,7 +20,7 @@
 
 ---
 
-## 🏃 Quick Start (3 Steps)
+## Quick start
 
 ### Step 1: Start Backend (if not already running)
 ```bash
@@ -33,33 +34,33 @@ npm install
 npm start
 ```
 
-### Step 3: Open Browser
+### Step 3: Open
 - Frontend: `http://localhost:3000`
 - Backend Docs: `http://127.0.0.1:8000/docs`
 
 ---
 
-## 📋 Full Testing Flow
+## Full testing flow
 
-### 🔐 Step 1: Register (Optional - Users Already Created)
-- Go to **Register** page
-- Use any username/password (already have test users)
+### Step 1: Accounts
 
-### 🔑 Step 2: Login
+Self-registration is disabled. Use the seeded test users or create accounts from the admin UI.
+
+### Step 2: Login
 1. Click **Login**
 2. Enter credentials:
    - Username: `admin`
    - Password: `admin123`
 3. Click **Login** → Redirects to Dashboard
 
-### 📤 Step 3: Upload File (Admin Only)
+### Step 3: Upload (admin only)
 1. Click **Upload** tab
 2. Select a test file (any .txt, .pdf, .jpg)
 3. Policy: `role:admin AND department:IT` (matches admin's attributes)
 4. Click **Upload**
 5. **Save the File ID** (e.g., `1`, `2`, `3`)
 
-### 📥 Step 4: Download & Decrypt (Full Flow)
+### Step 4: Download & decrypt
 
 #### A. Request Approval
 1. Click **Download** tab
@@ -67,23 +68,23 @@ npm start
    - **File ID**: (from step 3, e.g., `1`)
    - **Username**: `admin`
 3. Click **"Request Approval"**
-4. ✅ Should show:
+4. Should show:
    - Key ID (hex string)
    - 7 Authorities listed
 
-#### B. Simulate Approvals (Local Testing)
+#### B. Simulate approvals (local testing)
 1. Click **"Simulate Approvals (local)"**
 2. Will send approval transactions from 4 authorities
-3. ✅ Should show success message
+3. Should show a success message
 
-#### C. Download Decrypted File
+#### C. Download decrypted file
 1. Click **"Download Decrypted File"**
-2. ✅ Browser downloads the decrypted file!
+2. Browser downloads the decrypted file
 3. File will be named: `secure_file_<fileId>`
 
 ---
 
-## 🧪 Test Scenarios
+## Scenarios
 
 ### Scenario 1: Successful Decryption (Happy Path)
 **Step-by-step:**
