@@ -360,12 +360,6 @@ export default function Download() {
             </div>
           </div>
 
-          <div className="section">
-            <div className="section__title">Security note</div>
-            <p className="muted" style={{ margin: 0 }}>
-              Files are encrypted with AES-256 + attribute-based policy checks. Download requires 4-of-7 authority approvals on-chain.
-            </p>
-          </div>
         </div>
       </div>
     </div>
