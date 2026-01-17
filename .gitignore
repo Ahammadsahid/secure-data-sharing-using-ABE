@@ -13,13 +13,9 @@ frontend/build/
 ### Env files
 .env
 
-### SQLite / local state
-users.db
-
 ### Generated artifacts / local storage
-backend/storage/encrypted_files/
 downloaded_decrypted/
-storage/
+/storage/
 
 ### Blockchain build artifacts
 artifacts/
