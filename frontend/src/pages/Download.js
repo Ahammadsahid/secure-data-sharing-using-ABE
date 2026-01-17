@@ -250,6 +250,13 @@ export default function Download() {
                         {isSelected ? " · Selected" : ""}
                       </p>
 
+                      <div className="help" style={{ marginTop: 8 }}>
+                        <strong>Who can access?</strong>
+                        <div className="muted" style={{ marginTop: 6, wordBreak: "break-word" }}>
+                          {file.policy || "(No policy available)"}
+                        </div>
+                      </div>
+
                       <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
                         <button
                           className="btn"
