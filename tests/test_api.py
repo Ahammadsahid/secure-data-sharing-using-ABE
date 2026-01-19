@@ -1,22 +1,18 @@
-def test_register_login(tmp_path, monkeypatch):
-    from fastapi.testclient import TestClient
+import requests
 
-    # Use an isolated DB for tests (does not touch the repo's local users.db)
-    test_db_path = tmp_path / "tests_users.db"
-    monkeypatch.setenv("SECURE_DATA_SHARING_DB_PATH", str(test_db_path))
+BASE_URL = "http://127.0.0.1:8000"
 
-    from backend.main import app
-
-    client = TestClient(app)
-
-    r = client.post(
-        "/register",
-        json={"username": "testuser9", "password": "testpass", "role": "employee"},
+def test_register_login():
+    r = requests.post(
+        f"{BASE_URL}/register",
+        json={"username": "testuser9", "password": "testpass", "role": "employee"}
     )
     assert r.status_code == 403
 
-    r = client.post(
-        "/login",
-        json={"username": "admin", "password": "admin123"},
+    r = requests.post(
+        f"{BASE_URL}/login",
+        json={"username": "admin", "password": "admin123"}
     )
     assert r.status_code == 200
+
+    print("PASS: Frontend ↔ Backend API integration")

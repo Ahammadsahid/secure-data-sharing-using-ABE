@@ -2,10 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 
-# Default DB location is project root `users.db`, but allow overriding for tests/demo.
+# Force a single DB location (project root)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_DB_PATH = os.path.join(BASE_DIR, "users.db")
-DB_PATH = os.getenv("SECURE_DATA_SHARING_DB_PATH", DEFAULT_DB_PATH)
+DB_PATH = os.path.join(BASE_DIR, "users.db")
 
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 

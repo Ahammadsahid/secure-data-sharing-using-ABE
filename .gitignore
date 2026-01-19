@@ -1,26 +1,42 @@
-### Python
-__pycache__/
-*.py[cod]
-*.pyd
-.pytest_cache/
 venv/
-.venv/
-
-### Node / React
+__pycache__/
+*.pyc
 node_modules/
-frontend/build/
-
-### Env files
 .env
 
-### SQLite / local state
+# SQLite
+sqlite/
+sqlite3.exe
+sqlite3_analyzer.exe
+sqlite3_rsync.exe
 users.db
 
-### Generated artifacts / local storage
+# Generated file artifacts
 backend/storage/encrypted_files/
 downloaded_decrypted/
 storage/
+.pytest_cache/
 
-### Blockchain build artifacts
+# Scratch / accidental files (Windows)
+pip
+python
+raise
+RuntimeError
+You
+File
+ensure_multipart_is_installed()
+'
+
+# Blockchain artifacts
 artifacts/
 .states/
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# Env
+.env
