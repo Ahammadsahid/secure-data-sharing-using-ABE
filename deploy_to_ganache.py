@@ -22,17 +22,56 @@ SOLIDITY_FILE = "contracts/KeyAuthority.sol"
 DEPLOYMENT_INFO_PATH = "backend/blockchain/DEPLOYMENT_INFO.json"
 
 # Authority addresses (7 Ganache default accounts)
-AUTHORITIES = [
-    "0x8d4d6c34EDEA4E1eb2fc2423D6A091cdCB34DB48",
-    "0xfbe684383F81045249eB1E5974415f484E6F9f21",
-    "0xd2A2E096ef8313db712DFaB39F40229F17Fd3f94",
-    "0x57D14fF746d33127a90d4B888D378487e2C69f1f",
-    "0x0e852C955e5DBF7187Ec6ed7A3B131165C63cf9a",
-    "0x211Db7b2b475E9282B31Bd0fF39220805505Ff71",
-    "0x7FAdEAa4442bc60678ee16E401Ed80342aC24d16"
+DEFAULT_AUTHORITIES = [
+    "0x266E6E85ae9D38F8888925c724Ab1B739E4794f3",
+    "0x8F29929fC7094318BF562f981b04ecfA177Ecc54",
+    "0x6518Bcb59B8E40A5a24189217912C511b783590f",
+    "0x380cb6B16Ee5AbbB8A635e55e91c6F0eb982D7b6",
+    "0x463433BC694b26751130e6382081818B4D205a0C",
+    "0xF811e1e3eFFf3f857431f4CEea4D67c0a0c0e4C9",
+    "0x6c60d1EEc446c567eF756bf9d07CE0056DAEC777",
 ]
+AUTHORITIES = DEFAULT_AUTHORITIES
 
 THRESHOLD = 4
+
+
+def _parse_authorities_env():
+    """Optional override for authority addresses.
+
+    Supports either JSON array (e.g. '["0x..", ...]') or comma-separated list.
+    Env vars checked: GANACHE_AUTHORITIES, AUTHORITIES
+    """
+    raw = os.getenv("GANACHE_AUTHORITIES") or os.getenv("AUTHORITIES")
+    if not raw:
+        return None
+
+    raw = raw.strip()
+    try:
+        if raw.startswith("["):
+            authorities = json.loads(raw)
+        else:
+            authorities = [a.strip() for a in raw.split(",") if a.strip()]
+    except Exception as e:
+        raise SystemExit(f"Invalid GANACHE_AUTHORITIES/AUTHORITIES format: {e}")
+
+    if not isinstance(authorities, list) or not all(isinstance(a, str) for a in authorities):
+        raise SystemExit("GANACHE_AUTHORITIES/AUTHORITIES must be a list of hex addresses")
+    return authorities
+
+
+def _resolve_authorities(w3: Web3, expected: int = 7):
+    env_list = _parse_authorities_env()
+    if env_list is not None:
+        authorities = env_list
+    elif DEFAULT_AUTHORITIES:
+        authorities = DEFAULT_AUTHORITIES
+    else:
+        authorities = list((w3.eth.accounts or [])[:expected])
+
+    if len(authorities) < expected:
+        raise SystemExit(f"Need {expected} authority addresses, got {len(authorities)}")
+    return [Web3.to_checksum_address(a) for a in authorities[:expected]]
 
 def connect_to_ganache():
     """Connect to Ganache"""
@@ -60,18 +99,19 @@ def deploy_with_remix_bytecode(w3):
         print("Invalid address format")
         sys.exit(1)
     
-    save_deployment_info(contract_addr, {"contractAddress": contract_addr})
+    save_deployment_info(contract_addr, w3, {"contractAddress": contract_addr})
     return contract_addr
 
-def save_deployment_info(contract_address, receipt=None):
+def save_deployment_info(contract_address, w3: Web3, receipt=None):
     """Save deployment info to JSON"""
+    authorities = _resolve_authorities(w3)
     deployment_info = {
         "contractAddress": contract_address,
         "network": "Ganache",
         "rpcUrl": GANACHE_RPC,
-        "chainId": 1337,
+        "chainId": int(w3.eth.chain_id),
         "threshold": THRESHOLD,
-        "authorities": AUTHORITIES,
+        "authorities": authorities,
     }
     
     if receipt and isinstance(receipt, dict):
@@ -111,7 +151,7 @@ def main():
         addr = input("Paste contract address (0x...): ").strip()
         if addr.startswith("0x") and len(addr) == 42:
             deploy_with_remix_bytecode.__doc__ = None  # Hide the function
-            save_deployment_info(addr)
+            save_deployment_info(addr, w3)
             print("\n" + "=" * 70)
             print("Contract address saved")
             print("=" * 70)

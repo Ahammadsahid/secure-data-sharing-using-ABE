@@ -102,13 +102,13 @@ if __name__ == "__main__":
         "rpcUrl": "http://127.0.0.1:7545",
         "threshold": 4,
         "authorities": [
-            "0x8d4d6c34EDEA4E1eb2fc2423D6A091cdCB34DB48",
-            "0xfbe684383F81045249eB1E5974415f484E6F9f21",
-            "0xd2A2E096ef8313db712DFaB39F40229F17Fd3f94",
-            "0x57D14fF746d33127a90d4B888D378487e2C69f1f",
-            "0x0e852C955e5DBF7187Ec6ed7A3B131165C63cf9a",
-            "0x211Db7b2b475E9282B31Bd0fF39220805505Ff71",
-            "0x7FAdEAa4442bc60678ee16E401Ed80342aC24d16"
+            "0x266E6E85ae9D38F8888925c724Ab1B739E4794f3",
+            "0x8F29929fC7094318BF562f981b04ecfA177Ecc54",
+            "0x6518Bcb59B8E40A5a24189217912C511b783590f",
+            "0x380cb6B16Ee5AbbB8A635e55e91c6F0eb982D7b6",
+            "0x463433BC694b26751130e6382081818B4D205a0C",
+            "0xF811e1e3eFFf3f857431f4CEea4D67c0a0c0e4C9",
+            "0x6c60d1EEc446c567eF756bf9d07CE0056DAEC777"
         ],
         "message": "This simulates blockchain approval voting using JSON storage. Suitable for local development and testing.",
         "timestamp": datetime.utcnow().isoformat()

@@ -26,8 +26,22 @@ def policy_satisfied(attributes, policy):
     
     Returns True if user attributes satisfy the policy
     """
+    def _normalize_token(token: str) -> str:
+        return (token or "").strip().lower()
+
+    def _variants(token: str):
+        t = _normalize_token(token)
+        if t.startswith("department:"):
+            return {t, "dept:" + t.split(":", 1)[1]}
+        if t.startswith("dept:"):
+            return {t, "department:" + t.split(":", 1)[1]}
+        return {t}
+
+    # Normalize attribute set (case-insensitive)
+    normalized_attrs = {_normalize_token(a) for a in (attributes or set())}
+
     # Remove extra spaces
-    policy = policy.replace("  ", " ")
+    policy = (policy or "").replace("  ", " ")
     
     # Split by AND first (AND has lower precedence)
     and_parts = policy.split(" AND ")
@@ -44,7 +58,12 @@ def policy_satisfied(attributes, policy):
         or_parts = [p.strip() for p in or_parts]
         
         # For this AND group, at least one OR part must match
-        if not any(part in attributes for part in or_parts):
+        group_ok = False
+        for part in or_parts:
+            if _variants(part) & normalized_attrs:
+                group_ok = True
+                break
+        if not group_ok:
             return False
     
     return True

@@ -15,11 +15,44 @@ from backend.blockchain.blockchain_auth import get_blockchain_service
 from backend.abe.abe_key_manager import get_abe_manager
 import json
 import base64
+import re
+from urllib.parse import quote
 
 # -------------------------------
 # Router
 # -------------------------------
 router = APIRouter(prefix="/files", tags=["Files"])
+
+
+def _extract_policy_tokens(policy: str) -> list:
+    """Extract attribute tokens like role:admin, dept:IT, clearance:high from a policy string."""
+    if not policy:
+        return []
+    tokens = re.findall(r"[A-Za-z_]+:[A-Za-z0-9_-]+", policy)
+    # keep stable order while de-duplicating
+    seen = set()
+    out = []
+    for t in tokens:
+        if t not in seen:
+            seen.add(t)
+            out.append(t)
+    return out
+
+
+def _content_disposition_filename(filename: str) -> str:
+    """Build a Content-Disposition value safe for Starlette/latin-1 headers.
+
+    Sends an ASCII fallback `filename=` plus RFC 5987 `filename*=` (UTF-8 percent-encoded).
+    """
+    name = filename or "download"
+    # ASCII fallback (header values must be latin-1 encodable in Starlette)
+    ascii_fallback = name.encode("ascii", "ignore").decode("ascii")
+    if not ascii_fallback:
+        ascii_fallback = "download"
+    ascii_fallback = ascii_fallback.replace("\\", "_").replace('"', "'")
+
+    utf8_quoted = quote(name, safe="")
+    return f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{utf8_quoted}"
 
 # -------------------------------
 # DB Dependency
@@ -42,7 +75,8 @@ def list_all_files(db: Session = Depends(get_db)):
             "id": f.id,
             "filename": f.filename,
             "owner": f.owner,
-            "policy": f.policy
+            "policy": f.policy,
+            "required_attributes": _extract_policy_tokens(f.policy),
         }
         for f in files
     ]
@@ -154,7 +188,8 @@ def download_file(
     attributes = {
         f"role:{user.role}",
         f"dept:{user.department}",
-        f"clearance:{user.clearance}"
+        f"department:{user.department}",
+        f"clearance:{user.clearance}",
     }
 
     user_key = {"attributes": attributes}
@@ -178,8 +213,7 @@ def download_file(
     if not mime_type:
         mime_type = "application/octet-stream"
 
-    # Ensure filename is quoted in Content-Disposition
-    headers = {"Content-Disposition": f'attachment; filename="{secure_file.filename}"'}
+    headers = {"Content-Disposition": _content_disposition_filename(secure_file.filename)}
 
     return StreamingResponse(
         io.BytesIO(plaintext),

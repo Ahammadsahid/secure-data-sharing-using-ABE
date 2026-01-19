@@ -27,17 +27,49 @@ ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 ABI_PATH = CONTRACTS_DIR / "KeyAuthorityABI.json"
 DEPLOYMENT_INFO_PATH = PROJECT_ROOT / "backend" / "blockchain" / "DEPLOYMENT_INFO.json"
 
-# Authority addresses (same 7 authorities from Ganache)
-AUTHORITIES = [
-    "0x8d4d6c34EDEA4E1eb2fc2423D6A091cdCB34DB48",
-    "0xfbe684383F81045249eB1E5974415f484E6F9f21",
-    "0xd2A2E096ef8313db712DFaB39F40229F17Fd3f94",
-    "0x57D14fF746d33127a90d4B888D378487e2C69f1f",
-    "0x0e852C955e5DBF7187Ec6ed7A3B131165C63cf9a",
-    "0x211Db7b2b475E9282B31Bd0fF39220805505Ff71",
-    "0x7FAdEAa4442bc60678ee16E401Ed80342aC24d16"
+DEFAULT_AUTHORITIES = [
+    "0x266E6E85ae9D38F8888925c724Ab1B739E4794f3",
+    "0x8F29929fC7094318BF562f981b04ecfA177Ecc54",
+    "0x6518Bcb59B8E40A5a24189217912C511b783590f",
+    "0x380cb6B16Ee5AbbB8A635e55e91c6F0eb982D7b6",
+    "0x463433BC694b26751130e6382081818B4D205a0C",
+    "0xF811e1e3eFFf3f857431f4CEea4D67c0a0c0e4C9",
+    "0x6c60d1EEc446c567eF756bf9d07CE0056DAEC777",
 ]
+
+AUTHORITIES = DEFAULT_AUTHORITIES  # Can be overridden via GANACHE_AUTHORITIES/AUTHORITIES
 THRESHOLD = 4
+
+
+def _parse_authorities_env():
+    raw = os.getenv("GANACHE_AUTHORITIES") or os.getenv("AUTHORITIES")
+    if not raw:
+        return None
+    raw = raw.strip()
+    try:
+        if raw.startswith("["):
+            authorities = json.loads(raw)
+        else:
+            authorities = [a.strip() for a in raw.split(",") if a.strip()]
+    except Exception as e:
+        raise SystemExit(f"Invalid GANACHE_AUTHORITIES/AUTHORITIES format: {e}")
+
+    if not isinstance(authorities, list) or not all(isinstance(a, str) for a in authorities):
+        raise SystemExit("GANACHE_AUTHORITIES/AUTHORITIES must be a list of hex addresses")
+    return authorities
+
+
+def resolve_authorities(w3: Web3, expected: int = 7):
+    env_list = _parse_authorities_env()
+    if env_list is not None:
+        authorities = env_list
+    elif AUTHORITIES:
+        authorities = AUTHORITIES
+    else:
+        authorities = list((w3.eth.accounts or [])[:expected])
+    if len(authorities) < expected:
+        raise SystemExit(f"Need {expected} authorities, got {len(authorities)}")
+    return [Web3.to_checksum_address(a) for a in authorities[:expected]]
 
 # ============ STEP 1: LOAD ABI ============
 print("[1/5] Loading contract ABI...")
@@ -86,6 +118,9 @@ accounts = w3.eth.accounts
 deployer = accounts[0]
 print(f"   Deployer: {deployer}")
 print(f"   Balance: {w3.eth.get_balance(deployer) / 10**18:.2f} ETH")
+
+# Use first 7 unlocked Ganache accounts as authorities (or env override)
+AUTHORITIES = resolve_authorities(w3)
 
 # ============ STEP 4: DEPLOY CONTRACT ============
 print("\n[4/5] Deploying KeyAuthority contract...")

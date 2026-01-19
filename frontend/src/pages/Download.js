@@ -22,6 +22,45 @@ export default function Download() {
 
   const API_BASE = "http://127.0.0.1:8000";
 
+  const normalizeToken = (token) => String(token || "").trim().toLowerCase();
+
+  const tokenVariants = (token) => {
+    const t = normalizeToken(token);
+    if (t.startsWith("department:")) return [t, `dept:${t.split(":")[1] || ""}`];
+    if (t.startsWith("dept:")) return [t, `department:${t.split(":")[1] || ""}`];
+    return [t];
+  };
+
+  const userAttributeSet = () => {
+    const role = normalizeToken(`role:${userAttributes.role}`);
+    const dept = normalizeToken(`dept:${userAttributes.dept}`);
+    const department = normalizeToken(`department:${userAttributes.dept}`);
+    const clearance = normalizeToken(`clearance:${userAttributes.clearance}`);
+    return new Set([role, dept, department, clearance]);
+  };
+
+  const policySatisfied = (policy) => {
+    const attrs = userAttributeSet();
+    const p = String(policy || "").replace(/\s\s+/g, " ");
+    if (!p.trim()) return false;
+
+    const andParts = p.split(" AND ").map((x) => x.trim()).filter(Boolean);
+    for (let part of andParts) {
+      if (part.startsWith("(") && part.endsWith(")")) part = part.slice(1, -1).trim();
+      const orParts = part.split(" OR ").map((x) => x.trim()).filter(Boolean);
+      let ok = false;
+      for (const orToken of orParts) {
+        const variants = tokenVariants(orToken);
+        if (variants.some((v) => attrs.has(normalizeToken(v)))) {
+          ok = true;
+          break;
+        }
+      }
+      if (!ok) return false;
+    }
+    return true;
+  };
+
   const formatDetail = (detail) => {
     if (!detail) return "Unknown error";
     if (typeof detail === "string") return detail;
@@ -29,6 +68,36 @@ export default function Download() {
       return detail.message || detail.reason || JSON.stringify(detail);
     }
     return String(detail);
+  };
+
+  const getAxiosErrorMessage = async (err) => {
+    // Network/CORS/server-down: axios sets err.response = undefined
+    if (!err?.response) {
+      return (
+        err?.message ||
+        "Backend not reachable (is FastAPI running on http://127.0.0.1:8000 ?)"
+      );
+    }
+
+    const data = err?.response?.data;
+    try {
+      if (data instanceof Blob) {
+        const text = await data.text();
+        try {
+          const parsed = JSON.parse(text);
+          return formatDetail(parsed?.detail ?? parsed);
+        } catch {
+          return text;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    const detail = err?.response?.data?.detail ?? err?.response?.data;
+    const msg = formatDetail(detail);
+    if (msg && msg !== "Unknown error") return msg;
+    return err?.message || `Request failed (HTTP ${err?.response?.status || "?"})`;
   };
 
   useEffect(() => {
@@ -141,6 +210,15 @@ export default function Download() {
       const contentDisposition = res.headers["content-disposition"];
       let filename = selectedFile.filename || `secure_file_${selectedFile.id}`;
       if (contentDisposition) {
+        // RFC 5987: filename*=UTF-8''...
+        const star = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;]+)/i);
+        if (star && star[1]) {
+          try {
+            filename = decodeURIComponent(star[1].trim().replace(/^"|"$/g, ""));
+          } catch {
+            // ignore
+          }
+        }
         const match = contentDisposition.match(/filename="?(.+)"?/);
         if (match && match[1]) filename = match[1];
       }
@@ -152,7 +230,7 @@ export default function Download() {
       alert("File downloaded successfully.");
       setSignatureVerified(false); // Reset after download
     } catch (err) {
-      alert(formatDetail(err.response?.data?.detail) || "Download failed. Check access policy or approvals.");
+      alert((await getAxiosErrorMessage(err)) || "Download failed. Check access policy or approvals.");
     } finally {
       setDownloading(false);
     }
@@ -236,6 +314,7 @@ export default function Download() {
                 {files.map((file) => {
                   const isSelected = selectedFile && selectedFile.id === file.id;
                   const isRequested = isSelected && approvalStatus !== "pending";
+                  const canAccess = policySatisfied(file.policy);
                   return (
                     <div
                       key={file.id}
@@ -249,6 +328,18 @@ export default function Download() {
                         Owner: <span className="muted">{file.owner}</span>
                         {isSelected ? " · Selected" : ""}
                       </p>
+
+                      <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <span className={canAccess ? "badge badge--success" : "badge badge--warning"}>
+                          {canAccess ? "Policy matched" : "Policy not matched"}
+                        </span>
+                        {(file.required_attributes || []).slice(0, 6).map((t) => (
+                          <span key={t} className="badge">{t}</span>
+                        ))}
+                        {(file.required_attributes || []).length > 6 ? (
+                          <span className="badge">+{file.required_attributes.length - 6} more</span>
+                        ) : null}
+                      </div>
 
                       <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
                         <button

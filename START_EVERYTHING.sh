@@ -89,7 +89,7 @@ curl http://localhost:3000
 # 6. Environment: "Injected Provider - MetaMask"
 # 7. GAS LIMIT: 10000000
 # 8. Constructor Parameters:
-#    - Authorities: ["0x8d4d6c34EDEA4E1eb2fc2423D6A091cdCB34DB48","0xfbe684383F81045249eB1E5974415f484E6F9f21","0xd2A2E096ef8313db712DFaB39F40229F17Fd3f94","0x57D14fF746d33127a90d4B888D378487e2C69f1f","0x0e852C955e5DBF7187Ec6ed7A3B131165C63cf9a","0x211Db7b2b475E9282B31Bd0fF39220805505Ff71","0x7FAdEAa4442bc60678ee16E401Ed80342aC24d16"]
+#    - Authorities: [use the FIRST 7 Ganache accounts shown in your Ganache UI]
 #    - Threshold: 4
 # 9. Click "Deploy"
 # 10. Copy contract address to: backend/blockchain/DEPLOYMENT_INFO.json
