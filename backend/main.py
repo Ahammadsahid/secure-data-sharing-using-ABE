@@ -11,15 +11,11 @@ from backend.models import User
 from backend.auth.routes import hash_password
 
 logger = logging.getLogger("backend")
-
-# Create tables
 Base.metadata.create_all(bind=engine)
 
-# Initialize test users on startup
 def init_test_users():
     db = SessionLocal()
     try:
-        # Check if users already exist
         admin = db.query(User).filter(User.username == "admin").first()
         if not admin:
             admin = User(
@@ -82,7 +78,6 @@ def init_test_users():
     finally:
         db.close()
 
-# Initialize test users
 init_test_users()
 
 app = FastAPI(
@@ -103,7 +98,6 @@ app.add_middleware(
     expose_headers=["Content-Disposition"],
 )
 
-# Routes
 app.include_router(auth_router)
 app.include_router(file_router)
 app.include_router(access_router)

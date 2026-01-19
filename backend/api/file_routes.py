@@ -17,19 +17,14 @@ import json
 import base64
 import re
 from urllib.parse import quote
-
-# -------------------------------
-# Router
-# -------------------------------
 router = APIRouter(prefix="/files", tags=["Files"])
 
 
 def _extract_policy_tokens(policy: str) -> list:
-    """Extract attribute tokens like role:admin, dept:IT, clearance:high from a policy string."""
+    """Extract attribute tokens like role:admin, dept:IT, clearance:high."""
     if not policy:
         return []
     tokens = re.findall(r"[A-Za-z_]+:[A-Za-z0-9_-]+", policy)
-    # keep stable order while de-duplicating
     seen = set()
     out = []
     for t in tokens:
@@ -40,12 +35,8 @@ def _extract_policy_tokens(policy: str) -> list:
 
 
 def _content_disposition_filename(filename: str) -> str:
-    """Build a Content-Disposition value safe for Starlette/latin-1 headers.
-
-    Sends an ASCII fallback `filename=` plus RFC 5987 `filename*=` (UTF-8 percent-encoded).
-    """
+    """Build a Content-Disposition header value that is safe for non-ASCII filenames."""
     name = filename or "download"
-    # ASCII fallback (header values must be latin-1 encodable in Starlette)
     ascii_fallback = name.encode("ascii", "ignore").decode("ascii")
     if not ascii_fallback:
         ascii_fallback = "download"
@@ -54,9 +45,6 @@ def _content_disposition_filename(filename: str) -> str:
     utf8_quoted = quote(name, safe="")
     return f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{utf8_quoted}"
 
-# -------------------------------
-# DB Dependency
-# -------------------------------
 def get_db():
     db = SessionLocal()
     try:
@@ -64,9 +52,6 @@ def get_db():
     finally:
         db.close()
 
-# =====================================================
-# LIST ALL FILES (for frontend display)
-# =====================================================
 @router.get("/all")
 def list_all_files(db: Session = Depends(get_db)):
     files = db.query(SecureFile).all()
@@ -81,9 +66,6 @@ def list_all_files(db: Session = Depends(get_db)):
         for f in files
     ]
 
-# =====================================================
-# UPLOAD FILE (ADMIN ONLY)
-# =====================================================
 @router.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),
@@ -107,7 +89,6 @@ async def upload_file(
 
     file_path = save_encrypted_file(iv + encrypted_data)
 
-    # Encrypt the AES key with the policy using CP-ABE logic
     encrypted_key_struct = encrypt_aes_key(aes_key, policy)
     secure_file = SecureFile(
         filename=file.filename,
@@ -125,7 +106,6 @@ async def upload_file(
     db.commit()
     db.refresh(secure_file)
 
-    # Now split AES key into Shamir shares and persist per-authority
     try:
         blockchain = get_blockchain_service()
         abe = get_abe_manager()
@@ -133,7 +113,6 @@ async def upload_file(
 
         abe.split_key_to_shares(aes_key, str(secure_file.id), authorities)
     except Exception as e:
-        # Cleanup on failure
         print(f"Error while splitting/storing shares: {e}")
 
     return {
@@ -141,9 +120,6 @@ async def upload_file(
         "file_id": secure_file.id
     }
 
-# =====================================================
-# DOWNLOAD / DECRYPT FILE
-# =====================================================
 @router.get("/download/{file_id}")
 def download_file(
     file_id: int,
@@ -159,7 +135,6 @@ def download_file(
     if secure_file is None:
         raise HTTPException(status_code=404, detail="File not found")
 
-    # Check blockchain approval for the provided key_id
     try:
         blockchain = get_blockchain_service()
         approval_status = blockchain.verify_approval(key_id)
@@ -208,7 +183,6 @@ def download_file(
 
     plaintext = decrypt_file(ciphertext, aes_key, iv)
 
-    # Guess MIME type from original filename so browser saves with correct extension
     mime_type, _ = mimetypes.guess_type(secure_file.filename)
     if not mime_type:
         mime_type = "application/octet-stream"
@@ -222,9 +196,6 @@ def download_file(
     )
 
 
-# =====================================================
-# DELETE FILE (ADMIN ONLY)
-# =====================================================
 @router.delete("/{file_id}")
 def delete_file(
     file_id: int,
@@ -242,19 +213,16 @@ def delete_file(
     if secure_file is None:
         raise HTTPException(status_code=404, detail="File not found")
 
-    # Delete encrypted blob from disk (best-effort)
     try:
         delete_encrypted_file(secure_file.file_path)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete encrypted file blob: {str(e)}")
 
-    # Delete any stored shares for this file (best-effort)
     try:
         shares_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "storage", "shares", str(file_id)))
         if os.path.isdir(shares_dir):
             shutil.rmtree(shares_dir, ignore_errors=True)
     except Exception:
-        # Shares are not required for runtime correctness; don't block deletion.
         pass
 
     db.delete(secure_file)

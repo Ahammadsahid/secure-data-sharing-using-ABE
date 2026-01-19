@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""
-Initialize test data for the secure data sharing project
-Creates test users (admin + regular users) with attributes
-"""
-
-import json
+"""Initialize local test users in the SQLite database."""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from backend.database import Base
@@ -63,7 +58,7 @@ def initialize_db():
             db.add(user)
         
         db.commit()
-        print("✅ Database initialized with test users:")
+        print("Database initialized with test users:")
         print("\nTest Users:")
         print("-" * 60)
         for user_data in TEST_USERS:
@@ -72,7 +67,7 @@ def initialize_db():
             print()
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
         db.rollback()
     finally:
         db.close()

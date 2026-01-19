@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""Deploy KeyAuthority settings for local Ganache.
-
-This script does not compile Solidity. It helps you save the deployed contract
-address and related metadata to `backend/blockchain/DEPLOYMENT_INFO.json`.
-"""
+"""Save the deployed KeyAuthority address/config for Ganache."""
 
 import json
 import os
@@ -16,12 +12,10 @@ except ImportError:
     print("Missing dependency: web3. Install with: pip install web3")
     sys.exit(1)
 
-# Configuration
 GANACHE_RPC = "http://127.0.0.1:7545"
 SOLIDITY_FILE = "contracts/KeyAuthority.sol"
 DEPLOYMENT_INFO_PATH = "backend/blockchain/DEPLOYMENT_INFO.json"
 
-# Authority addresses (7 Ganache default accounts)
 DEFAULT_AUTHORITIES = [
     "0x266E6E85ae9D38F8888925c724Ab1B739E4794f3",
     "0x8F29929fC7094318BF562f981b04ecfA177Ecc54",
@@ -37,11 +31,7 @@ THRESHOLD = 4
 
 
 def _parse_authorities_env():
-    """Optional override for authority addresses.
-
-    Supports either JSON array (e.g. '["0x..", ...]') or comma-separated list.
-    Env vars checked: GANACHE_AUTHORITIES, AUTHORITIES
-    """
+    """Optional override: JSON array or comma-separated list."""
     raw = os.getenv("GANACHE_AUTHORITIES") or os.getenv("AUTHORITIES")
     if not raw:
         return None
@@ -74,7 +64,7 @@ def _resolve_authorities(w3: Web3, expected: int = 7):
     return [Web3.to_checksum_address(a) for a in authorities[:expected]]
 
 def connect_to_ganache():
-    """Connect to Ganache"""
+    """Connect to Ganache."""
     print(f"Connecting to Ganache at {GANACHE_RPC}...")
     w3 = Web3(Web3.HTTPProvider(GANACHE_RPC))
     
@@ -87,11 +77,8 @@ def connect_to_ganache():
     return w3
 
 def deploy_with_remix_bytecode(w3):
-    """
-    Alternative: Use pre-compiled bytecode from Remix
-    Get bytecode from Remix: Solidity Compiler → Compilation Details → Bytecode
-    """
-    print("\nAlternative: deploy in Remix and paste the deployed address here.")
+    """Prompt for an address (when deployed via Remix) and save it."""
+    print("\nDeploy in Remix, then paste the contract address here.")
     
     contract_addr = input("\nPaste deployed contract address (0x...): ").strip()
     
@@ -103,7 +90,7 @@ def deploy_with_remix_bytecode(w3):
     return contract_addr
 
 def save_deployment_info(contract_address, w3: Web3, receipt=None):
-    """Save deployment info to JSON"""
+    """Write backend/blockchain/DEPLOYMENT_INFO.json."""
     authorities = _resolve_authorities(w3)
     deployment_info = {
         "contractAddress": contract_address,
@@ -140,17 +127,13 @@ def main():
     print("\n" + "=" * 70)
     print("Recommended: deploy via Remix and save the contract address")
     print("=" * 70)
-    print("\nThis script focuses on saving the address used by the backend:")
-    print("  1. Deploy via Remix GUI (you already did this)")
-    print("  2. Copy the deployed contract address")
-    print("  3. Paste it below to save to the backend\n")
+    print("\nThis saves the contract address used by the backend.")
     
     choice = input("Do you already have a deployed contract address? (y/n): ").strip().lower()
     
     if choice == 'y':
         addr = input("Paste contract address (0x...): ").strip()
         if addr.startswith("0x") and len(addr) == 42:
-            deploy_with_remix_bytecode.__doc__ = None  # Hide the function
             save_deployment_info(addr, w3)
             print("\n" + "=" * 70)
             print("Contract address saved")
@@ -165,7 +148,7 @@ def main():
             print("Invalid address")
             sys.exit(1)
     else:
-        print("\n📍 MANUAL DEPLOYMENT VIA REMIX:")
+        print("\nManual deployment via Remix:")
         deploy_with_remix_bytecode(w3)
 
 if __name__ == "__main__":

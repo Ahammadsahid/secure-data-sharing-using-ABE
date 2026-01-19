@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""
-Python-based KeyAuthority contract simulation (avoids Ganache/Solidity compilation issues).
-Stores approvals in a JSON file that mimics blockchain behavior.
-"""
+"""KeyAuthority simulator using local JSON storage."""
 
 import json
 from pathlib import Path
@@ -12,7 +9,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 STORAGE_FILE = PROJECT_ROOT / "backend" / "blockchain" / "approvals_storage.json"
 
 class KeyAuthoritySimulator:
-    """Simulates KeyAuthority contract behavior using local JSON storage"""
+    """Simulate KeyAuthority approvals using local JSON storage."""
     
     def __init__(self, storage_file=None):
         self.storage_file = storage_file or STORAGE_FILE
@@ -120,7 +117,7 @@ if __name__ == "__main__":
     with open(deployment_file, 'w') as f:
         json.dump(deployment_info, f, indent=2)
     
-    print(f"✅ KeyAuthority simulator created")
+    print("KeyAuthority simulator created")
     print(f"   Storage: {STORAGE_FILE}")
     print(f"   Config: {deployment_file}")
     print(f"\nApproval voting will be stored in: {STORAGE_FILE}")

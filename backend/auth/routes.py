@@ -18,9 +18,7 @@ router = APIRouter()
 
 security = HTTPBasic()
 
-# =========================
-# PASSWORD UTILS
-# =========================
+# Password utils
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
@@ -35,7 +33,7 @@ def validate_password_strength(password: str) -> None:
     if password is None:
         raise HTTPException(status_code=400, detail="Password is required")
 
-    # Professional baseline: length + upper/lower + number + special
+    # Baseline: length + upper/lower + number + special
     if len(password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
     if not re.search(r"[A-Z]", password):
@@ -49,11 +47,7 @@ def validate_password_strength(password: str) -> None:
 
 
 def validate_initial_password(password: str) -> None:
-    """Validation for admin-provisioned initial passwords.
-
-    Per project requirement: admin can set a basic password and share it with the user.
-    The user is expected to change it later to a strong password (enforced by /change-password and /forgot-password/reset).
-    """
+    """Validation for admin-provisioned initial passwords."""
     if password is None:
         raise HTTPException(status_code=400, detail="Password is required")
     if len(password) < 6:
@@ -66,15 +60,12 @@ def generate_recovery_code(length: int = 12) -> str:
 
 
 def generate_temporary_password(length: int = 8) -> str:
-    # Basic initial password generator (not necessarily "strong")
     if length < 6:
         length = 6
     pool = string.ascii_letters + string.digits
     return "".join(secrets.choice(pool) for _ in range(length))
 
-# =========================
-# DB DEPENDENCY
-# =========================
+# DB dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -91,9 +82,7 @@ def require_admin(credentials: HTTPBasicCredentials = Depends(security), db: Ses
         raise HTTPException(status_code=403, detail="Admin privileges required")
     return user
 
-# =========================
-# REGISTER
-# =========================
+# Register
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
     # Public self-registration is disabled.
@@ -225,12 +214,9 @@ def admin_reset_recovery_code(username: str, admin: User = Depends(require_admin
         "recovery_code": recovery_code,
     }
 
-# =========================
-# LOGIN
-# =========================
+# Login
 @router.post("/login")
 def login(user_data: LoginSchema, db: Session = Depends(get_db)):
-    # Debug logs to help diagnose login issues during development
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("auth")
 

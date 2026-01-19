@@ -1,5 +1,5 @@
 @echo off
-REM 🚀 Secure Data Sharing - Complete Startup for Windows
+REM Secure Data Sharing - Startup instructions for Windows
 REM Open 4 Command Prompts and paste these commands
 
 cls
@@ -162,17 +162,16 @@ echo   taskkill /PID [PID] /F
 echo.
 echo.
 echo ====================================================================
-echo  YOUR SYSTEM INCLUDES
+echo  FEATURES
 echo ====================================================================
 echo.
-echo ✅ Decentralized access control
-echo ✅ Attribute-based encryption
-echo ✅ 4-of-7 threshold blockchain authentication
-echo ✅ MetaMask integration
-echo ✅ Smart contracts on Ganache
-echo ✅ Professional frontend UI
-echo ✅ Complete REST API
-echo ✅ Comprehensive documentation
+echo - Decentralized access control
+echo - Attribute-based encryption
+echo - 4-of-7 threshold blockchain authentication
+echo - MetaMask integration
+echo - Smart contracts on Ganache
+echo - React frontend + FastAPI backend
+echo - REST API + docs
 echo.
 echo Ready to:
 echo - Test and demonstrate
@@ -181,7 +180,7 @@ echo - Deploy to production
 echo - Scale to Ethereum mainnet
 echo.
 echo ====================================================================
-echo  🚀 SECURE DATA SHARING SYSTEM - READY TO LAUNCH!
+echo  SECURE DATA SHARING SYSTEM - READY
 echo ====================================================================
 echo.
 

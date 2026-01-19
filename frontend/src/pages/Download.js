@@ -1,7 +1,5 @@
-
 import axios from "axios";
 import { useEffect, useState } from "react";
-
 
 export default function Download() {
   const [files, setFiles] = useState([]);
@@ -71,7 +69,6 @@ export default function Download() {
   };
 
   const getAxiosErrorMessage = async (err) => {
-    // Network/CORS/server-down: axios sets err.response = undefined
     if (!err?.response) {
       return (
         err?.message ||
@@ -91,7 +88,6 @@ export default function Download() {
         }
       }
     } catch {
-      // ignore
     }
 
     const detail = err?.response?.data?.detail ?? err?.response?.data;
@@ -151,9 +147,8 @@ export default function Download() {
         authority_addresses: toApprove,
       });
 
-      console.log("SIMULATE RESULT:", res.data);
+      console.log("simulateApprovals:", res.data);
 
-      // Verify on-chain status (this is what actually matters)
       const statusRes = await axios.get(`${API_BASE}/api/access/approval-status/${keyId}`);
       if (statusRes.data?.is_approved) {
         setApprovalStatus("approved");
@@ -210,13 +205,11 @@ export default function Download() {
       const contentDisposition = res.headers["content-disposition"];
       let filename = selectedFile.filename || `secure_file_${selectedFile.id}`;
       if (contentDisposition) {
-        // RFC 5987: filename*=UTF-8''...
         const star = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;]+)/i);
         if (star && star[1]) {
           try {
             filename = decodeURIComponent(star[1].trim().replace(/^"|"$/g, ""));
           } catch {
-            // ignore
           }
         }
         const match = contentDisposition.match(/filename="?(.+)"?/);
@@ -228,16 +221,13 @@ export default function Download() {
       link.remove();
       window.URL.revokeObjectURL(url);
       alert("File downloaded successfully.");
-      setSignatureVerified(false); // Reset after download
+      setSignatureVerified(false);
     } catch (err) {
       alert((await getAxiosErrorMessage(err)) || "Download failed. Check access policy or approvals.");
     } finally {
       setDownloading(false);
     }
   };
-
-
-  // Signature verification using MetaMask
 
   const verifySignature = async () => {
     if (!window.ethereum) {
@@ -265,7 +255,6 @@ export default function Download() {
         file_id: fileId,
         user_attributes: userAttributes
       };
-      console.log("VERIFY SIGNATURE PAYLOAD:", payload);
       const res = await axios.post(
         "http://127.0.0.1:8000/api/access/verify-signature",
         payload
@@ -282,14 +271,6 @@ export default function Download() {
       alert(`Signature verification failed: ${err.response?.data?.reason || err.response?.data?.detail || err.message || "unknown"}`);
     }
   };
-
-  // const getProgressColor = () => {
-  //   if (approvalStatus === "pending") return "#95a5a6";
-  //   if (approvalStatus === "key_received") return "#f39c12";
-  //   if (approvalStatus === "approved") return "#27ae60";
-  //   return "#e74c3c";
-  // };
-
 
   return (
     <div className="page">

@@ -3,16 +3,12 @@ from cryptography.fernet import Fernet
 
 
 def generate_master_key():
-    """
-    Simulated CP-ABE master key
-    """
+    """Return a master key (demo)."""
     return Fernet.generate_key()
 
 
 def generate_user_key(master_key, attributes):
-    """
-    Simulated attribute-based private key
-    """
+    """Create a demo user key from a master key + attributes."""
     return {
         "master_key": master_key,
         "attributes": set(attributes)
@@ -20,12 +16,7 @@ def generate_user_key(master_key, attributes):
 
 
 def policy_satisfied(attributes, policy):
-    """
-    Policy evaluator supporting AND, OR operators
-    Example policy: '(role:admin OR role:manager) AND (dept:IT OR dept:Finance) AND clearance:high'
-    
-    Returns True if user attributes satisfy the policy
-    """
+    """Return True if attribute tokens satisfy the policy (supports AND/OR)."""
     def _normalize_token(token: str) -> str:
         return (token or "").strip().lower()
 
@@ -70,9 +61,7 @@ def policy_satisfied(attributes, policy):
 
 
 def encrypt_aes_key(aes_key: bytes, policy: str):
-    """
-    Encrypt AES key with policy
-    """
+    """Encrypt an AES key (gated by a policy string)."""
     fernet_key = Fernet.generate_key()
     fernet = Fernet(fernet_key)
 
@@ -86,9 +75,7 @@ def encrypt_aes_key(aes_key: bytes, policy: str):
 
 
 def decrypt_aes_key(ciphertext, user_key):
-    """
-    Decrypt AES key only if attributes satisfy policy
-    """
+    """Decrypt an AES key if the user's attributes satisfy the policy."""
     if not policy_satisfied(user_key["attributes"], ciphertext["policy"]):
         raise Exception("Access Denied: Attributes do not satisfy policy")
 

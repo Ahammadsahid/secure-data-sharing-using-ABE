@@ -1,5 +1,5 @@
 #!/bin/bash
-# 🚀 Secure Data Sharing - Complete Startup Script
+# Secure Data Sharing - Startup commands
 # Copy these commands to your VS Code terminals
 
 # ================================================================
@@ -10,11 +10,8 @@
 ganache-cli --accounts 7 --deterministic --host 127.0.0.1 --port 7545
 
 # Expected output:
-# ✔ EthereumJS TestRPC v... (ganache-core: ...)
-# ✔ Listening on 127.0.0.1:7545
-# ✔ Gas Price: 2000000000
-# ✔ Gas Limit: 6721975
-# ✔ [List of 7 accounts with 100 ETH each]
+# - Listening on 127.0.0.1:7545
+# - [List of accounts]
 
 
 # ================================================================
@@ -223,23 +220,15 @@ rm backend/test.db
 
 
 # ================================================================
-# YOU'RE ALL SET! 🎉
+# DONE
 # ================================================================
 
-# Your system includes:
-# ✅ Decentralized access control
-# ✅ Attribute-based encryption
-# ✅ 4-of-7 threshold blockchain authentication
-# ✅ MetaMask integration
-# ✅ Smart contracts on Ganache
-# ✅ Professional frontend UI
-# ✅ Complete REST API
-# ✅ Comprehensive documentation
+# Features:
+# - Decentralized access control
+# - Attribute-based encryption
+# - 4-of-7 threshold blockchain authentication
+# - MetaMask integration
+# - Smart contracts on Ganache
+# - React frontend + FastAPI backend
 
-# Ready to:
-# - Test and demonstrate
-# - Submit for evaluation
-# - Deploy to production
-# - Scale to Ethereum mainnet
-
-echo "🚀 Secure Data Sharing System - Ready to Launch!"
+echo "Secure Data Sharing System - Ready"

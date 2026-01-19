@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
-"""
-Complete end-to-end test of the secure data sharing system
-Tests: Upload as admin, Download as different users with policies
-"""
+"""End-to-end test for upload/approval/download flows."""
 
 import requests
 import time
-import json
 from io import BytesIO
 
 API_BASE = "http://127.0.0.1:8000"
@@ -24,13 +20,13 @@ def print_header(msg):
     print(f"{'='*70}{RESET}\n")
 
 def print_success(msg):
-    print(f"{GREEN}✅ {msg}{RESET}")
+    print(f"{GREEN}OK: {msg}{RESET}")
 
 def print_error(msg):
-    print(f"{RED}❌ {msg}{RESET}")
+    print(f"{RED}ERROR: {msg}{RESET}")
 
 def print_info(msg):
-    print(f"{YELLOW}ℹ️  {msg}{RESET}")
+    print(f"{YELLOW}INFO: {msg}{RESET}")
 
 def test_login(username, password):
     """Test login endpoint"""
@@ -290,16 +286,13 @@ def main():
             except Exception as e:
                 print_error(f"Error: {e}")
     
-    # ============================================================================
-    # SUMMARY
-    # ============================================================================
-    print_header("🎉 END-TO-END TEST COMPLETE!")
+    print_header("END-TO-END TEST COMPLETE")
     print(f"{GREEN}Summary:{RESET}")
-    print(f"  {GREEN}✅ User login with attributes{RESET}")
-    print(f"  {GREEN}✅ File upload with complex ABE policy{RESET}")
-    print(f"  {GREEN}✅ Alice can download (matches policy){RESET}")
-    print(f"  {GREEN}✅ Bob cannot access restricted files{RESET}")
-    print(f"  {GREEN}✅ Bob can access finance files{RESET}")
+    print(f"  {GREEN}- User login with attributes{RESET}")
+    print(f"  {GREEN}- File upload with ABE policy{RESET}")
+    print(f"  {GREEN}- Alice can download (matches policy){RESET}")
+    print(f"  {GREEN}- Bob cannot access restricted files{RESET}")
+    print(f"  {GREEN}- Bob can access finance files{RESET}")
     print(f"\n{BLUE}System is working correctly!{RESET}\n")
 
 if __name__ == "__main__":
