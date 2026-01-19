@@ -235,7 +235,7 @@ role:admin AND department:IT
 - **Threshold Required**: 4 (57% majority)
 - **Max Shares Lost**: 3 (without losing ability to decrypt)
 - **Key Split Algorithm**: Shamir's Secret Sharing
-- **Encryption**: AES-256 + ABE
+- **Encryption**: AES-256-GCM (AEAD) for file data + CP-ABE for AES key protection
 - **Blockchain**: Ganache (local, instant mining)
 
 ---

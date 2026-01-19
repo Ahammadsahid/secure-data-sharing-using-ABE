@@ -8,7 +8,7 @@ import os
 import shutil
 from backend.database import SessionLocal
 from backend.models import SecureFile, User
-from backend.aes.aes_utils import generate_aes_key, encrypt_file, decrypt_file
+from backend.aes.aes_utils import generate_aes_key, encrypt_blob, decrypt_blob
 from backend.abe.cpabe_utils import encrypt_aes_key, decrypt_aes_key
 from backend.storage.file_storage import save_encrypted_file, load_encrypted_file, delete_encrypted_file
 from backend.blockchain.blockchain_auth import get_blockchain_service
@@ -85,9 +85,8 @@ async def upload_file(
         raise HTTPException(status_code=400, detail="Empty file uploaded")
 
     aes_key = generate_aes_key()
-    iv, encrypted_data = encrypt_file(raw_data, aes_key)
-
-    file_path = save_encrypted_file(iv + encrypted_data)
+    encrypted_blob = encrypt_blob(raw_data, aes_key)
+    file_path = save_encrypted_file(encrypted_blob)
 
     encrypted_key_struct = encrypt_aes_key(aes_key, policy)
     secure_file = SecureFile(
@@ -178,10 +177,7 @@ def download_file(
         raise HTTPException(status_code=403, detail=f"Access denied by policy: {str(e)}")
 
     encrypted_blob = load_encrypted_file(secure_file.file_path)
-    iv = encrypted_blob[:16]
-    ciphertext = encrypted_blob[16:]
-
-    plaintext = decrypt_file(ciphertext, aes_key, iv)
+    plaintext = decrypt_blob(encrypted_blob, aes_key)
 
     mime_type, _ = mimetypes.guess_type(secure_file.filename)
     if not mime_type:
