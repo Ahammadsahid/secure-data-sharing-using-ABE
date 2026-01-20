@@ -2,7 +2,7 @@
 
 This repository contains a capstone implementation of secure file sharing using:
 - CP-ABE-style attribute policies for access control
-- AES-256-GCM (AEAD) for file content encryption
+- AES-256-CBC for file content encryption
 - A local blockchain approval workflow (Ganache + Solidity contract)
 
 Backend: FastAPI + SQLAlchemy (SQLite)

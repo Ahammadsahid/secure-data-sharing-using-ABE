@@ -184,7 +184,7 @@ npm start
 | **Upload Page** | Encrypt files with ABE policy (admin only) |
 | **Download Page** | Request approval, get blockchain consensus, decrypt |
 | **Blockchain** | 4-of-7 threshold approval (stored on Ganache) |
-| **AES-256-GCM (AEAD)** | Encrypts file content + detects tampering |
+| **AES-256-CBC** | Encrypts actual file content |
 | **ABE** | Controls who can decrypt (role + dept + clearance) |
 | **Backend DB** | Stores users, files, metadata (SQLite) |
 
@@ -217,7 +217,7 @@ Then click simulate and download → ✅ Success
 ## 🔐 Security Summary
 
 Your system protects files with:
-1. **AES-256-GCM (AEAD)** - File encryption + integrity (tamper detection)
+1. **AES-256-CBC** - File content encryption
 2. **Attribute-Based Encryption** - Access control via attributes
 3. **Blockchain Verification** - 4-of-7 threshold consensus
 4. **Password Hashing** - bcrypt for password security

@@ -5,8 +5,8 @@ def test_correct_key():
     data = b"Sensitive File Data"
     key = generate_aes_key()
 
-    nonce, encrypted = encrypt_file(data, key)
-    decrypted = decrypt_file(encrypted, key, nonce)
+    iv, encrypted = encrypt_file(data, key)
+    decrypted = decrypt_file(encrypted, key, iv)
 
     assert decrypted == data
     print("PASS: Correct key decryption successful")
@@ -17,10 +17,10 @@ def test_wrong_key():
     key = generate_aes_key()
     wrong_key = generate_aes_key()
 
-    nonce, encrypted = encrypt_file(data, key)
+    iv, encrypted = encrypt_file(data, key)
 
     try:
-        decrypt_file(encrypted, wrong_key, nonce)
+        decrypt_file(encrypted, wrong_key, iv)
         print("FAIL: Decryption should not succeed with wrong key")
     except Exception:
         print("PASS: Decryption failed with wrong key")

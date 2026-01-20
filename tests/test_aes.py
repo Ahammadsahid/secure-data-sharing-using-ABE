@@ -22,12 +22,9 @@ def test_blob_roundtrip_and_legacy_compat():
     blob = encrypt_blob(data, key)
     assert decrypt_blob(blob, key) == data
 
-    # Legacy CBC format: iv(16) + ciphertext (produced by internal CBC helper)
-    # We generate it through the public encrypt_file/decrypt_file compatibility
-    # path by calling the internal CBC encrypt via a known pattern.
-    from backend.aes import aes_utils as au
-    iv, cbc_ct = au._encrypt_cbc(data, key)
-    legacy_blob = iv + cbc_ct
+    # Stored CBC format is iv(16) + ciphertext; ensure decrypt_blob can read it.
+    iv, ct = encrypt_file(data, key)
+    legacy_blob = iv + ct
     assert decrypt_blob(legacy_blob, key) == data
 
 if __name__ == "__main__":
