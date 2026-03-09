@@ -1,5 +1,5 @@
-import base64
-from cryptography.fernet import Fernet
+import base64   #encoding technique
+from cryptography.fernet import Fernet    #symmetric authenticated encryption
 
 
 def generate_master_key():

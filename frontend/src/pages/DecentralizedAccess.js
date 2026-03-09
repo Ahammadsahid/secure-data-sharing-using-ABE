@@ -71,12 +71,14 @@ export default function DecentralizedAccess() {
       try {
         const response = await axios.get(`${API_URL}/api/access/approval-status/${keyId}`);
         setApprovalStatus(response.data);
+        const totalAuthorities = response.data?.total_authorities ?? authorities.length;
+        const threshold = response.data?.threshold ?? response.data?.required_approvals ?? 4;
 
         if (response.data.is_approved) {
-          setMessage(`Key approved. ${response.data.current_approvals}/${response.data.required_approvals} authorities approved.`);
+          setMessage(`Key approved. ${response.data.current_approvals}/${totalAuthorities} authorities approved (threshold: ${threshold}).`);
           clearInterval(interval);
         } else {
-          setMessage(`Waiting for approvals: ${response.data.current_approvals}/${response.data.required_approvals}`);
+          setMessage(`Waiting for approvals: ${response.data.current_approvals}/${totalAuthorities} (threshold: ${threshold})`);
         }
       } catch (error) {
         clearInterval(interval);
@@ -216,8 +218,12 @@ export default function DecentralizedAccess() {
                 <div className="stat">
                   <div className="stat__label">Approvals</div>
                   <div className="stat__value">
-                    {approvalStatus.current_approvals} / {approvalStatus.required_approvals}
+                    {approvalStatus.current_approvals} / {(approvalStatus.total_authorities ?? authorities.length)}
                   </div>
+                </div>
+                <div className="stat">
+                  <div className="stat__label">Threshold</div>
+                  <div className="stat__value">{approvalStatus.threshold ?? approvalStatus.required_approvals ?? 4}</div>
                 </div>
                 <div className="stat">
                   <div className="stat__label">Approved?</div>

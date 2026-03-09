@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="980" viewBox="0 0 1400 980">
+  <defs>
+    <style>
+      .title{font:700 18px/1.2 system-ui,Segoe UI,Arial;fill:#0f172a}
+      .label{font:600 13px/1.2 system-ui,Segoe UI,Arial;fill:#0f172a}
+      .small{font:500 12px/1.2 system-ui,Segoe UI,Arial;fill:#0f172a}
+      .muted{fill:#475569}
+      .box{rx:14;ry:14;stroke-width:2}
+      .start{fill:#0ea5e9;stroke:#0369a1}
+      .end{fill:#111827;stroke:#111827}
+      .action{fill:#eef2ff;stroke:#6366f1}
+      .decision{fill:#fff7ed;stroke:#fb923c}
+      .store{fill:#ecfeff;stroke:#06b6d4}
+      .chain{fill:#f0fdf4;stroke:#22c55e}
+      .white{fill:#ffffff}
+      .arrow{stroke:#334155;stroke-width:2.2;fill:none;marker-end:url(#m)}
+      .darrow{stroke:#334155;stroke-width:2.2;fill:none;stroke-dasharray:6 5;marker-end:url(#m)}
+    </style>
+    <marker id="m" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#334155" />
+    </marker>
+  </defs>
+
+  <text x="40" y="40" class="title">Secure Data Sharing — System Workflow Flowchart</text>
+  <text x="40" y="66" class="small muted">AES confidentiality + Attribute policy check + 4-of-7 blockchain approvals + Secure download</text>
+
+  <!-- Row 1 -->
+  <rect x="40" y="100" width="210" height="70" class="box start"/>
+  <text x="145" y="130" text-anchor="middle" class="label" fill="#fff">System Start</text>
+  <text x="145" y="152" text-anchor="middle" class="small" fill="#fff">Initialize services</text>
+
+  <rect x="300" y="92" width="420" height="86" class="box action"/>
+  <text x="510" y="122" text-anchor="middle" class="label">Initialization</text>
+  <text x="510" y="146" text-anchor="middle" class="small muted">.env • SQLite metadata • MongoDB GridFS • Ganache contract</text>
+
+  <rect x="770" y="92" width="270" height="86" class="box action"/>
+  <text x="905" y="122" text-anchor="middle" class="label">User Login</text>
+  <text x="905" y="146" text-anchor="middle" class="small muted">username + password</text>
+
+  <polygon points="1110,92 1270,135 1110,178 950,135" fill="#fff7ed" stroke="#fb923c" stroke-width="2"/>
+  <text x="1110" y="131" text-anchor="middle" class="label">Credentials</text>
+  <text x="1110" y="151" text-anchor="middle" class="label">valid?</text>
+
+  <!-- arrows row1 -->
+  <path d="M250 135 L300 135" class="arrow"/>
+  <path d="M720 135 L770 135" class="arrow"/>
+  <path d="M1040 135 L950 135" class="arrow"/>
+
+  <!-- invalid -->
+  <rect x="1170" y="210" width="190" height="60" class="box end"/>
+  <text x="1265" y="245" text-anchor="middle" class="label" fill="#fff">Reject login</text>
+  <path d="M1160 155 L1210 210" class="arrow"/>
+  <text x="1184" y="188" class="small muted">No</text>
+
+  <!-- valid path -->
+  <polygon points="905,210 1035,255 905,300 775,255" fill="#fff7ed" stroke="#fb923c" stroke-width="2"/>
+  <text x="905" y="252" text-anchor="middle" class="label">Role is</text>
+  <text x="905" y="272" text-anchor="middle" class="label">Admin?</text>
+  <path d="1110 178 L905 210" class="arrow"/>
+  <text x="1006" y="200" class="small muted">Yes</text>
+
+  <!-- Admin upload branch -->
+  <rect x="40" y="340" width="300" height="86" class="box action"/>
+  <text x="190" y="370" text-anchor="middle" class="label">Admin Upload</text>
+  <text x="190" y="394" text-anchor="middle" class="small muted">Define policy (role/dept/clearance)</text>
+
+  <rect x="380" y="340" width="300" height="86" class="box action"/>
+  <text x="530" y="370" text-anchor="middle" class="label">Encrypt File</text>
+  <text x="530" y="394" text-anchor="middle" class="small muted">AES-256-CBC + random AES key</text>
+
+  <rect x="720" y="340" width="300" height="86" class="box store"/>
+  <text x="870" y="370" text-anchor="middle" class="label">Store Encrypted Blob</text>
+  <text x="870" y="394" text-anchor="middle" class="small muted">MongoDB Atlas GridFS</text>
+
+  <rect x="1060" y="340" width="300" height="86" class="box store"/>
+  <text x="1210" y="370" text-anchor="middle" class="label">Store Metadata</text>
+  <text x="1210" y="394" text-anchor="middle" class="small muted">SQLite (secure_files + policy + key struct)</text>
+
+  <path d="M905 300 L190 340" class="arrow"/>
+  <text x="540" y="320" class="small muted">Yes</text>
+
+  <path d="M340 383 L380 383" class="arrow"/>
+  <path d="M680 383 L720 383" class="arrow"/>
+  <path d="M1020 383 L1060 383" class="arrow"/>
+
+  <rect x="1060" y="450" width="300" height="70" class="box action"/>
+  <text x="1210" y="478" text-anchor="middle" class="label">Distribute Key Shares</text>
+  <text x="1210" y="502" text-anchor="middle" class="small muted">Authorities (demo)</text>
+  <path d="M1210 426 L1210 450" class="arrow"/>
+
+  <!-- Non-admin branch -->
+  <rect x="40" y="560" width="300" height="78" class="box action"/>
+  <text x="190" y="592" text-anchor="middle" class="label">Browse Files</text>
+  <text x="190" y="616" text-anchor="middle" class="small muted">View policies + required attributes</text>
+  <path d="M775 255 L190 560" class="arrow"/>
+  <text x="430" y="430" class="small muted">No</text>
+
+  <!-- Request flow -->
+  <rect x="380" y="560" width="300" height="78" class="box action"/>
+  <text x="530" y="592" text-anchor="middle" class="label">Request Access</text>
+  <text x="530" y="616" text-anchor="middle" class="small muted">Create tracking key_id</text>
+
+  <polygon points="870,550 1010,599 870,648 730,599" fill="#fff7ed" stroke="#fb923c" stroke-width="2"/>
+  <text x="870" y="595" text-anchor="middle" class="label">Policy</text>
+  <text x="870" y="615" text-anchor="middle" class="label">satisfied?</text>
+
+  <rect x="1060" y="560" width="300" height="78" class="box chain"/>
+  <text x="1210" y="592" text-anchor="middle" class="label">Blockchain Approval</text>
+  <text x="1210" y="616" text-anchor="middle" class="small muted">4-of-7 authorities (Ganache)</text>
+
+  <path d="M340 599 L380 599" class="arrow"/>
+  <path d="M680 599 L730 599" class="arrow"/>
+  <path d="M1010 599 L1060 599" class="arrow"/>
+
+  <!-- policy denied -->
+  <rect x="730" y="680" width="280" height="62" class="box end"/>
+  <text x="870" y="716" text-anchor="middle" class="label" fill="#fff">Access denied</text>
+  <path d="M870 648 L870 680" class="arrow"/>
+  <text x="882" y="668" class="small muted">No</text>
+
+  <!-- Verified signature + decrypt -->
+  <rect x="40" y="760" width="300" height="78" class="box action"/>
+  <text x="190" y="792" text-anchor="middle" class="label">Verify Signature</text>
+  <text x="190" y="816" text-anchor="middle" class="small muted">MetaMask personal_sign</text>
+
+  <rect x="380" y="760" width="300" height="78" class="box store"/>
+  <text x="530" y="792" text-anchor="middle" class="label">Load Encrypted Blob</text>
+  <text x="530" y="816" text-anchor="middle" class="small muted">GridFS get()</text>
+
+  <rect x="720" y="760" width="300" height="78" class="box action"/>
+  <text x="870" y="792" text-anchor="middle" class="label">Decrypt</text>
+  <text x="870" y="816" text-anchor="middle" class="small muted">AES key derived under policy</text>
+
+  <rect x="1060" y="760" width="300" height="78" class="box action"/>
+  <text x="1210" y="792" text-anchor="middle" class="label">Download</text>
+  <text x="1210" y="816" text-anchor="middle" class="small muted">Stream decrypted bytes</text>
+
+  <rect x="1060" y="860" width="300" height="78" class="box action"/>
+  <text x="1210" y="892" text-anchor="middle" class="label">Audit / Logs</text>
+  <text x="1210" y="916" text-anchor="middle" class="small muted">Requests • approvals • downloads</text>
+
+  <rect x="40" y="860" width="210" height="78" class="box end"/>
+  <text x="145" y="904" text-anchor="middle" class="label" fill="#fff">Logout</text>
+
+  <!-- arrows bottom -->
+  <path d="M1210 638 L190 760" class="arrow"/>
+  <text x="760" y="710" class="small muted">Yes</text>
+
+  <path d="M340 799 L380 799" class="arrow"/>
+  <path d="M680 799 L720 799" class="arrow"/>
+  <path d="M1020 799 L1060 799" class="arrow"/>
+  <path d="M1210 838 L1210 860" class="arrow"/>
+  <path d="M1060 899 L250 899" class="arrow"/>
+
+</svg>

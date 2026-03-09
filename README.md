@@ -4,6 +4,7 @@ This repository contains a capstone implementation of secure file sharing using:
 - CP-ABE-style attribute policies for access control
 - AES-256-CBC for file content encryption
 - A local blockchain approval workflow (Ganache + Solidity contract)
+- MongoDB Atlas (GridFS) for encrypted file blob storage
 
 Backend: FastAPI + SQLAlchemy (SQLite)
 Frontend: React
@@ -31,10 +32,19 @@ See: `docs/root-guides/REMIX_DEPLOYMENT_GUIDE.md`
 
 ### 3) Backend
 
+This project stores encrypted file blobs in MongoDB (GridFS).
+
+Set these environment variables before starting the backend:
+
+- `STORAGE_BACKEND=mongo`
+- `MONGODB_URI` (required)
+- `MONGODB_DB` (optional; default: `secure_data_sharing`)
+- `MONGODB_FILES_BUCKET` (optional; default: `encrypted_files`)
+
 ```bash
 cd backend
 python -m pip install -r requirements.txt
-python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 API docs: http://127.0.0.1:8000/docs
@@ -61,3 +71,5 @@ UI: http://localhost:3000
 
 - If the contract address is missing/wrong, the access-control endpoints can return 503 with `contract_misconfigured`.
 - This is a capstone/demo setup (local chain, local file storage, SQLite). Production deployment would require additional hardening.
+
+ 

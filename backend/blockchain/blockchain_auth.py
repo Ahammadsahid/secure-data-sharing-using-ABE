@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from web3 import Web3
 from eth_account.messages import encode_defunct
 from datetime import datetime, timedelta
-import hashlib
+from backend.utils.hashing import KeyIdHasher
 
 class BlockchainAuthService:
     def __init__(
@@ -140,7 +140,7 @@ class BlockchainAuthService:
                 merged.append(addr)
 
         return merged
-
+    #Is this wallet a registered authority
     def is_authority(self, address: str) -> bool:
         try:
             return self.contract.functions.authorities(Web3.to_checksum_address(address)).call()
@@ -170,7 +170,7 @@ class BlockchainAuthService:
             bytes32 key ID (used for blockchain approval tracking)
         """
         combined = f"{file_id}:{user_id}:{datetime.utcnow().isoformat()}"
-        return hashlib.sha256(combined.encode()).digest()
+        return KeyIdHasher.digest(combined.encode())
 
     def initiate_key_approval(self, file_id: str, user_id: str, user_attributes: dict) -> dict:
         """
@@ -228,6 +228,8 @@ class BlockchainAuthService:
                 "key_id": key_id,
                 "current_approvals": approval_count,
                 "required_approvals": self.threshold,
+                "threshold": self.threshold,
+                "total_authorities": len(self.authorities),
                 "is_approved": is_approved,
                 "approval_percentage": int((approval_count / self.threshold) * 100) if self.threshold else 0
             }
@@ -402,7 +404,7 @@ def get_blockchain_service(contract_address: str = None) -> BlockchainAuthServic
         except Exception:
             deploy_authorities = None
         try:
-            deploy_threshold  # type: ignore[name-defined]
+            deploy_threshold  # type: ignore[name-defined].0k
         except Exception:
             deploy_threshold = 4
 

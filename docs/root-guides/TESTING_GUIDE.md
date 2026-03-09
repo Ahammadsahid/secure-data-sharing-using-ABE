@@ -24,6 +24,7 @@
 
 ### Step 1: Start Backend (if not already running)
 ```bash
+cd "c:\7th sem\CAPSTON PROJECT\code\secure-data-sharing"
 python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 

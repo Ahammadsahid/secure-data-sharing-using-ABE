@@ -3,11 +3,14 @@ import logging
 from fastapi import Request
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
+import os
+import shutil
 
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from backend.database import SessionLocal
-from backend.models import User, RecoveryCode
+from backend.models import User, RecoveryCode, SecureFile
+from backend.storage.storage_backend import delete_encrypted_blob
 from backend.schemas import LoginSchema, UserCreate, ChangePasswordSchema, ForgotPasswordResetSchema
 
 import re
@@ -212,6 +215,66 @@ def admin_reset_recovery_code(username: str, admin: User = Depends(require_admin
         "message": "Recovery code reset",
         "username": username,
         "recovery_code": recovery_code,
+    }
+
+
+@router.delete("/admin/users/{username}")
+def admin_delete_user(
+    username: str,
+    delete_files: bool = True,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    target = db.query(User).filter(User.username == username).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if target.username == admin.username:
+        raise HTTPException(status_code=400, detail="Admin cannot delete their own account")
+
+    if target.role == "admin":
+        admin_count = db.query(User).filter(User.role == "admin").count()
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="Cannot delete the last admin account")
+
+    deleted_file_ids = []
+    if delete_files:
+        files = db.query(SecureFile).filter(SecureFile.owner == username).all()
+        for f in files:
+            # Best-effort deletion of encrypted blob; if this fails we abort so DB doesn't
+            # point to a blob we couldn't delete.
+            try:
+                delete_encrypted_blob(f.file_path)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to delete encrypted blob for file_id={f.id}: {str(e)}",
+                )
+
+            # Remove any stored key shares on disk (demo logic)
+            try:
+                shares_dir = os.path.abspath(
+                    os.path.join(os.path.dirname(__file__), "..", "storage", "shares", str(f.id))
+                )
+                if os.path.isdir(shares_dir):
+                    shutil.rmtree(shares_dir, ignore_errors=True)
+            except Exception:
+                pass
+
+            db.delete(f)
+            deleted_file_ids.append(f.id)
+
+    recovery = db.query(RecoveryCode).filter(RecoveryCode.username == username).first()
+    if recovery:
+        db.delete(recovery)
+
+    db.delete(target)
+    db.commit()
+
+    return {
+        "message": "User deleted successfully",
+        "username": username,
+        "deleted_files": deleted_file_ids,
     }
 
 # Login

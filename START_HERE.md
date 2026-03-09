@@ -26,9 +26,9 @@ ganache-cli --accounts 7 --deterministic --host 127.0.0.1 --port 7545
 3) Start the backend
 
 ```bash
-cd backend
-python -m pip install -r requirements.txt
-python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+cd "c:\7th sem\CAPSTON PROJECT\code\secure-data-sharing"
+python -m pip install -r backend/requirements.txt
+python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 4) Start the frontend

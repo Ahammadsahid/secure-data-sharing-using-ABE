@@ -1,41 +1,19 @@
-"""
-ABE (Attribute-Based Encryption) Key Management Service
+"""ABE/Access-control helper utilities.
 
-IMPORTANT NOTE on your architecture:
-- This module handles ABE encryption/decryption with attribute-based policies
-- Key sharing IS implemented (Shamir Secret Sharing for potential future use)
-- However, your current project uses BLOCKCHAIN THRESHOLD APPROVAL instead:
-  * Keys are NOT split and distributed to authorities
-  * Authorities DO NOT hold cryptographic shares
-  * Instead, authorities VOTE on the blockchain to approve access
-  * The backend releases the full decryption key after 4-of-7 approvals
-  
-This is THRESHOLD APPROVAL AUTHENTICATION, not threshold cryptography.
-"""
-import os
-from typing import Dict, List, Tuple, Optional
-"""
-NOTE:
-Charm-Crypto is not installed in this environment.
-ABE is simulated for policy enforcement.
-Actual encryption is done using AES after blockchain approval.
-This approach is commonly used in academic projects.
+In this project:
+- Actual file encryption is AES-256-CBC (see backend.aes.aes_utils)
+- "ABE" is used for policy enforcement and key-wrapping (see backend.abe.cpabe_utils)
+- Authorities approve access via blockchain votes (threshold approval)
+
+This module only keeps the parts that the API currently uses:
+- optional Shamir Secret Sharing (demo) for reconstructing an AES key
+- policy verification helper
 """
 
-CHART_AVAILABLE = False  # Simulate Charm-Crypto not installed
-
-# Dummy placeholders to avoid import errors
-CHARM_AVAILABLE = False
-ZR = object  # Dummy type for ZR
-G2 = object  # Dummy type for G2
-class PairingGroup:
-    def __init__(self, *args, **kwargs): pass
-
-class SecretUtil:
-    def __init__(self, *args, **kwargs): pass
-import hashlib
 import base64
+import os
 from datetime import datetime
+from typing import Dict, List, Optional
 
 class ABEKeyManager:
     """
@@ -58,56 +36,10 @@ class ABEKeyManager:
         """
         self.threshold: int = threshold
         self.total_shares: int = total_shares
-        if CHARM_AVAILABLE:
-            try:
-                self.pairing_group = PairingGroup('SS512')
-                self.secret_util = SecretUtil(self.pairing_group, verbose=False)
-            except Exception:
-                self.pairing_group = None
-                self.secret_util = None
-        else:
-            self.pairing_group = None
-            self.secret_util = None
-        
-        # Storage for shares
-        self.key_shares: Dict[str, List[bytes]] = {}
+
+        # Storage for shares/metadata (demo Shamir flow)
+        self.key_shares: Dict[str, Dict] = {}
         self.share_mapping: Dict[str, Dict] = {}
-
-    def generate_master_key(self, attributes: Dict[str, str]) -> Tuple[bytes, bytes]:
-        """
-        Generate master key and public key for attribute set
-        
-        Args:
-            attributes: User attributes {role, department, clearance}
-            
-        Returns:
-            (master_key_bytes, public_key_bytes)
-        """
-        # Create attribute string
-        attr_string: str = ",".join([f"{k}:{v}" for k, v in attributes.items()])
-
-        # If charm library is available use pairing-based keys, otherwise fallback
-        if CHARM_AVAILABLE and self.pairing_group is not None:
-            msk = self.pairing_group.random(ZR)
-            mpk = self.pairing_group.random(G2) ** msk
-            attr_hash: bytes = hashlib.sha256(attr_string.encode()).digest()
-            attr_element = self.pairing_group.hash(attr_hash, ZR)
-            gpk = (mpk ** attr_element)
-
-            return (
-                base64.b64encode(str(msk).encode()),
-                base64.b64encode(str(mpk).encode())
-            )
-
-        # Fallback (no charm) — generate deterministic pseudo-keys using hashing
-        seed: bytes = hashlib.sha256(attr_string.encode() + os.urandom(16)).digest()
-        msk_bytes: bytes = hashlib.sha256(seed + b"msk").digest()
-        mpk_bytes: bytes = hashlib.sha256(seed + b"mpk").digest()
-
-        return (
-            base64.b64encode(msk_bytes),
-            base64.b64encode(mpk_bytes)
-        )
 
     def split_key_to_shares(self, 
                            key_material: bytes, 
@@ -309,63 +241,25 @@ class ABEKeyManager:
         
         return secret
 
-    def encrypt_file(self, 
-                    file_data: bytes,
-                    policy: str,
-                    user_attributes: Dict[str, str]) -> Tuple[bytes, Dict]:
-        """
-        Encrypt file data with ABE
-        
-        Args:
-            file_data: File content to encrypt
-            policy: Attribute policy (e.g., "role:admin AND department:IT")
-            user_attributes: User's attributes
-            
-        Returns:
-            (encrypted_data, encryption_metadata)
-        """
-        # Generate encryption key
-        enc_key: bytes = hashlib.sha256(str(user_attributes).encode()).digest()
-        
-        # Simple XOR encryption (in production use AES-256)
-        encrypted = bytes(a ^ b for a, b in zip(file_data, enc_key * (len(file_data) // 32 + 1)))
-        
-        metadata = {
-            "policy": policy,
-            "attributes_required": self._parse_policy(policy),
-            "encrypted_at": datetime.utcnow().isoformat(),
-            "threshold": self.threshold,
-            "total_shares": self.total_shares
-        }
-        
-        return encrypted, metadata
+    def decrypt_file(
+        self,
+        encrypted_data: bytes,
+        decryption_key: bytes,
+        user_attributes: Optional[Dict[str, str]] = None,
+    ) -> Optional[bytes]:
+        """Decrypt AES-encrypted blob using the reconstructed AES key.
 
-    def decrypt_file(self,
-                    encrypted_data: bytes,
-                    decryption_key: bytes,
-                    user_attributes: Dict[str, str]) -> Optional[bytes]:
-        """
-        Decrypt file data with reconstructed key
-        
-        Args:
-            encrypted_data: Encrypted file content
-            decryption_key: Reconstructed key from threshold shares
-            user_attributes: User's attributes
-            
-        Returns:
-            Decrypted data if successful
+        The upload flow stores AES-CBC data in the format: iv(16) + ciphertext.
+        This method mirrors that by delegating to backend.aes.aes_utils.decrypt_blob.
         """
         try:
-            # Verify attributes match policy
-            # In production: proper attribute verification
-            
-            # Decrypt using XOR
-            decrypted = bytes(a ^ b for a, b in zip(
-                encrypted_data, 
-                decryption_key * (len(encrypted_data) // 32 + 1)
-            ))
-            
-            return decrypted
+            from backend.aes.aes_utils import decrypt_blob
+
+            # user_attributes is not used for cryptographic decryption in this project;
+            # policy enforcement happens before decrypt (see access_routes).
+            _ = user_attributes
+
+            return decrypt_blob(encrypted_data, decryption_key)
         except Exception as e:
             print(f"Decryption error: {e}")
             return None

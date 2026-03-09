@@ -19,7 +19,8 @@ pysha3==1.0.2
 # Encryption & Cryptography
 cryptography==42.0.8
 pycryptodome==3.19.0
-charm-crypto==0.50
+# NOTE: charm-crypto packaging varies by platform; keep it unpinned to avoid install failures.
+charm-crypto
 
 # Database
 sqlite==0.0.1
@@ -30,3 +31,9 @@ httpx==0.25.2
 
 # Utilities
 requests==2.31.0
+
+# Cloud storage (GCS) (optional)
+# google-cloud-storage==2.14.0
+
+# MongoDB (optional)
+pymongo[srv]==4.6.3

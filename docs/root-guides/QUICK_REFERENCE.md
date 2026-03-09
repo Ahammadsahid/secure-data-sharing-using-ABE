@@ -7,7 +7,7 @@
 ganache-cli --accounts 7 --deterministic --host 127.0.0.1 --port 7545
 
 # Terminal 2: Start Python Backend
-cd backend && python -m uvicorn main:app --reload --port 8000
+cd "c:\7th sem\CAPSTON PROJECT\code\secure-data-sharing" && python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 
 # Terminal 3: Start React Frontend  
 cd frontend && npm install && npm start

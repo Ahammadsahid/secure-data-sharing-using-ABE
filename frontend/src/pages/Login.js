@@ -68,7 +68,11 @@ export default function Login() {
 
       navigate("/dashboard");
     } catch (err) {
-      alert((err.response?.data?.detail || "Invalid username or password."));
+      if (!err.response) {
+        alert("Backend is not reachable on http://127.0.0.1:8000. Start the backend and try again.");
+      } else {
+        alert(err.response?.data?.detail || "Invalid username or password.");
+      }
     } finally {
       setLoading(false);
     }
@@ -129,21 +133,6 @@ export default function Login() {
             </p>
           </div>
 
-          <div className="section">
-            <div className="section__title">Test users</div>
-            <div className="stat">
-              <p className="help" style={{ marginTop: 0 }}>
-                Use these for demo:
-              </p>
-              <ul className="help" style={{ margin: 0, paddingLeft: 18 }}>
-                <li><strong>admin</strong> / admin123 (admin)</li>
-                <li><strong>manager</strong> / manager123 (manager)</li>
-                <li><strong>alice</strong> / alice123 (employee)</li>
-                <li><strong>bob</strong> / bob123 (accountant)</li>
-                <li><strong>charlie</strong> / charlie123 (worker)</li>
-              </ul>
-            </div>
-          </div>
         </div>
       </div>
     </div>

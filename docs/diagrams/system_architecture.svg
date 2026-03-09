@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <defs>
+    <style>
+      .title { font: 700 22px Arial, Helvetica, sans-serif; fill: #111; }
+      .label { font: 600 14px Arial, Helvetica, sans-serif; fill: #111; }
+      .text { font: 13px Arial, Helvetica, sans-serif; fill: #111; }
+      .small { font: 12px Arial, Helvetica, sans-serif; fill: #333; }
+      .box { fill: #ffffff; stroke: #333; stroke-width: 1.5; rx: 10; ry: 10; }
+      .group { fill: #f7f8fb; stroke: #aab; stroke-width: 1.5; rx: 14; ry: 14; }
+      .arrow { stroke: #333; stroke-width: 1.6; fill: none; marker-end: url(#arrowHead); }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 Z" fill="#333" />
+    </marker>
+  </defs>
+
+  <text x="40" y="40" class="title">Secure Data Sharing System Architecture</text>
+
+  <!-- Client Layer -->
+  <rect x="40" y="80" width="340" height="250" class="group" />
+  <text x="60" y="110" class="label">Client Layer</text>
+
+  <rect x="70" y="140" width="280" height="70" class="box" />
+  <text x="90" y="170" class="text">React Frontend</text>
+  <text x="90" y="192" class="small">UI: upload / request / download</text>
+
+  <rect x="70" y="230" width="280" height="70" class="box" />
+  <text x="90" y="260" class="text">MetaMask Wallet</text>
+  <text x="90" y="282" class="small">ECDSA signature verification</text>
+
+  <!-- API Layer -->
+  <rect x="430" y="80" width="360" height="250" class="group" />
+  <text x="450" y="110" class="label">API Layer</text>
+
+  <rect x="460" y="140" width="300" height="70" class="box" />
+  <text x="480" y="170" class="text">FastAPI Backend</text>
+  <text x="480" y="192" class="small">Auth + Files + Access APIs</text>
+
+  <rect x="460" y="230" width="300" height="70" class="box" />
+  <text x="480" y="260" class="text">Routes</text>
+  <text x="480" y="282" class="small">/auth, /api/files, /api/access</text>
+
+  <!-- Services Layer -->
+  <rect x="820" y="80" width="340" height="250" class="group" />
+  <text x="840" y="110" class="label">Backend Services</text>
+
+  <rect x="850" y="140" width="280" height="50" class="box" />
+  <text x="870" y="170" class="text">AES-256-CBC Crypto</text>
+
+  <rect x="850" y="200" width="280" height="50" class="box" />
+  <text x="870" y="230" class="text">ABE / Key Manager</text>
+
+  <rect x="850" y="260" width="280" height="50" class="box" />
+  <text x="870" y="290" class="text">Storage + Blockchain Services</text>
+
+  <!-- Data Layer -->
+  <rect x="40" y="370" width="1120" height="300" class="group" />
+  <text x="60" y="400" class="label">Data Layer</text>
+
+  <rect x="70" y="430" width="260" height="80" class="box" />
+  <text x="90" y="462" class="text">SQLite</text>
+  <text x="90" y="484" class="small">Users + metadata + policies</text>
+
+  <rect x="360" y="430" width="260" height="80" class="box" />
+  <text x="380" y="462" class="text">MongoDB Atlas (GridFS)</text>
+  <text x="380" y="484" class="small">Encrypted file blobs</text>
+
+  <rect x="650" y="430" width="240" height="80" class="box" />
+  <text x="670" y="462" class="text">Local Shares Storage</text>
+  <text x="670" y="484" class="small">storage/shares/</text>
+
+  <rect x="920" y="430" width="210" height="80" class="box" />
+  <text x="940" y="462" class="text">Ganache + Smart Contract</text>
+  <text x="940" y="484" class="small">KeyAuthority.sol approvals</text>
+
+  <!-- Arrows -->
+  <path d="M350,175 C390,175 400,175 430,175" class="arrow" />
+  <text x="370" y="165" class="small">HTTP/JSON</text>
+
+  <path d="M350,265 C390,265 400,265 430,265" class="arrow" />
+  <text x="370" y="255" class="small">Sign / Verify</text>
+
+  <path d="M610,210 C700,210 740,210 820,210" class="arrow" />
+  <text x="675" y="200" class="small">internal calls</text>
+
+  <path d="M610,240 C700,240 740,240 820,240" class="arrow" />
+
+  <!-- Backend to datastores -->
+  <path d="M610,300 C610,350 240,360 200,430" class="arrow" />
+  <text x="460" y="390" class="small">metadata/policies</text>
+
+  <path d="M610,300 C650,360 440,380 490,430" class="arrow" />
+  <text x="525" y="390" class="small">encrypted blobs</text>
+
+  <path d="M980,300 C980,350 780,365 770,430" class="arrow" />
+  <text x="850" y="390" class="small">key shares</text>
+
+  <path d="M1040,300 C1060,350 1040,370 1030,430" class="arrow" />
+  <text x="1015" y="390" class="small">approvals</text>
+</svg>

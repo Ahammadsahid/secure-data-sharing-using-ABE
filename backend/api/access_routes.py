@@ -4,13 +4,15 @@ Decentralized access-control routes.
 Integrates blockchain authentication with ABE key management.
 """
 
+import io
 import mimetypes
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
+from urllib.parse import quote
 
 from eth_account.messages import encode_defunct
 from fastapi import APIRouter, Body, Depends, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 from web3 import Web3
 
@@ -19,6 +21,18 @@ from backend.database import SessionLocal
 from backend.models import SecureFile
 
 router = APIRouter(prefix="/api/access", tags=["Decentralized Access"])
+
+
+def _content_disposition_filename(filename: str) -> str:
+    """Build a Content-Disposition header value that is safe for non-ASCII filenames."""
+    name = filename or "download"
+    ascii_fallback = name.encode("ascii", "ignore").decode("ascii")
+    if not ascii_fallback:
+        ascii_fallback = "download"
+    ascii_fallback = ascii_fallback.replace("\\", "_").replace('"', "'")
+
+    utf8_quoted = quote(name, safe="")
+    return f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{utf8_quoted}"
 
 
 def get_db():
@@ -160,6 +174,8 @@ class ApprovalStatusResponse(BaseModel):
     key_id: str
     current_approvals: int
     required_approvals: int
+    threshold: Optional[int] = None
+    total_authorities: Optional[int] = None
     is_approved: bool
     approval_percentage: int
 
@@ -222,25 +238,21 @@ async def decrypt_file(req: DecryptionRequest, db=Depends(get_db)):
     if not reconstructed_key:
         return {"decrypted": False, "message": "Key reconstruction failed"}
 
-    with open(file_record.file_path, "rb") as f:
-        encrypted_data = f.read()
+    from backend.storage.storage_backend import load_encrypted_blob
+
+    encrypted_data = load_encrypted_blob(file_record.file_path)
 
     decrypted_data = abe.decrypt_file(encrypted_data, reconstructed_key, {})
     if not decrypted_data:
         return {"decrypted": False, "message": "Decryption failed"}
 
-    out_dir = os.path.join("storage", "decrypted_files")
-    os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, file_record.filename)
-
-    with open(out_path, "wb") as f:
-        f.write(decrypted_data)
-
+    # Stream decrypted data without persisting plaintext to disk.
     mime_type, _ = mimetypes.guess_type(file_record.filename)
-    return FileResponse(
-        path=out_path,
-        filename=file_record.filename,
+    headers = {"Content-Disposition": _content_disposition_filename(file_record.filename)}
+    return StreamingResponse(
+        io.BytesIO(decrypted_data),
         media_type=mime_type or "application/octet-stream",
+        headers=headers,
     )
 
 

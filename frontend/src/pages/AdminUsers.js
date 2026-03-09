@@ -17,6 +17,10 @@ export default function AdminUsers() {
   const [recoveryPayload, setRecoveryPayload] = useState({ username: "" });
   const [recoveryResult, setRecoveryResult] = useState(null);
 
+  const [deleteFilesWithUser, setDeleteFilesWithUser] = useState(true);
+  const [deletingUser, setDeletingUser] = useState(false);
+  const [deletingUsername, setDeletingUsername] = useState("");
+
   const [newUser, setNewUser] = useState({
     username: "",
     role: "employee",
@@ -31,11 +35,53 @@ export default function AdminUsers() {
   });
 
   const isAdmin = (localStorage.getItem("role") || "").toLowerCase() === "admin";
+  const adminUsername = localStorage.getItem("username") || "";
 
   const getBasicAuthHeader = () => {
-    const adminUsername = localStorage.getItem("username") || "";
     const token = btoa(`${adminUsername}:${adminPassword}`);
     return { Authorization: `Basic ${token}` };
+  };
+
+  const deleteUser = async (username) => {
+    if (!isAdmin) {
+      alert("Only admins can delete users.");
+      return;
+    }
+    if (!adminPassword) {
+      alert("Enter your admin password to continue.");
+      return;
+    }
+    if (!username || username.trim().length < 3) {
+      alert("Invalid username");
+      return;
+    }
+    if (username === adminUsername) {
+      alert("You cannot delete your own admin account.");
+      return;
+    }
+
+    const ok = window.confirm(
+      `Delete user '${username}'?` +
+        (deleteFilesWithUser ? " This will also delete their uploaded files." : "")
+    );
+    if (!ok) return;
+
+    setDeletingUser(true);
+    setDeletingUsername(username);
+    try {
+      await axios.delete(`${backendUrl}/admin/users/${encodeURIComponent(username)}`, {
+        params: { delete_files: deleteFilesWithUser ? "true" : "false" },
+        headers: {
+          ...getBasicAuthHeader(),
+        },
+      });
+      await loadUsers();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Failed to delete user");
+    } finally {
+      setDeletingUser(false);
+      setDeletingUsername("");
+    }
   };
 
   const loadUsers = async () => {
@@ -424,6 +470,19 @@ export default function AdminUsers() {
               </p>
             ) : (
               <div className="stat">
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
+                  <label style={{ display: "flex", gap: 8, alignItems: "center", margin: 0 }}>
+                    <input
+                      type="checkbox"
+                      checked={deleteFilesWithUser}
+                      onChange={(e) => setDeleteFilesWithUser(e.target.checked)}
+                    />
+                    Also delete user's files
+                  </label>
+                  <span className="help" style={{ margin: 0 }}>
+                    (Recommended for cleanup; keep off if you only want to remove login access.)
+                  </span>
+                </div>
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
@@ -432,6 +491,7 @@ export default function AdminUsers() {
                         <th style={{ textAlign: "left", padding: "10px 8px", borderBottom: "1px solid var(--border)" }}>Role</th>
                         <th style={{ textAlign: "left", padding: "10px 8px", borderBottom: "1px solid var(--border)" }}>Department</th>
                         <th style={{ textAlign: "left", padding: "10px 8px", borderBottom: "1px solid var(--border)" }}>Clearance</th>
+                        <th style={{ textAlign: "left", padding: "10px 8px", borderBottom: "1px solid var(--border)" }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -441,6 +501,16 @@ export default function AdminUsers() {
                           <td style={{ padding: "10px 8px", borderBottom: "1px solid var(--border)", textTransform: "capitalize" }}>{u.role}</td>
                           <td style={{ padding: "10px 8px", borderBottom: "1px solid var(--border)" }}>{u.department}</td>
                           <td style={{ padding: "10px 8px", borderBottom: "1px solid var(--border)", textTransform: "capitalize" }}>{u.clearance}</td>
+                          <td style={{ padding: "10px 8px", borderBottom: "1px solid var(--border)" }}>
+                            <button
+                              className="btn btn--danger"
+                              onClick={() => deleteUser(u.username)}
+                              disabled={deletingUser || u.username === adminUsername}
+                              title={u.username === adminUsername ? "You cannot delete your own account" : "Delete user"}
+                            >
+                              {deletingUsername === u.username ? "Deleting..." : "Delete"}
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

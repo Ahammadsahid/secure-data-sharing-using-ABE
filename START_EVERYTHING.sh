@@ -19,9 +19,9 @@ ganache-cli --accounts 7 --deterministic --host 127.0.0.1 --port 7545
 # ================================================================
 # Copy these commands to the second VS Code terminal:
 
-cd backend
-pip install -r requirements.txt
-python -m uvicorn main:app --reload --port 8000
+cd "$(dirname "$0")"
+python -m pip install -r backend/requirements.txt
+python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 
 # Expected output:
 # INFO:     Uvicorn running on http://127.0.0.1:8000

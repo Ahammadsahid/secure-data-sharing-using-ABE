@@ -21,9 +21,9 @@ echo ====================================================================
 echo  COMMAND PROMPT 2: Start Python Backend (FastAPI)
 echo ====================================================================
 echo.
-echo cd backend
-echo pip install -r requirements.txt
-echo python -m uvicorn main:app --reload --port 8000
+echo cd /d "%cd%"
+echo python -m pip install -r backend\requirements.txt
+echo python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 echo.
 echo.
 echo ====================================================================

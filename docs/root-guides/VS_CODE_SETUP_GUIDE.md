@@ -22,7 +22,7 @@ ganache-cli --accounts 7 --deterministic --host 127.0.0.1 --port 7545
 ```bash
 cd backend
 python -m pip install -r requirements.txt
-python -m uvicorn main:app --reload --port 8000
+python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 ### **Terminal 3 - Frontend (React)**

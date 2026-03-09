@@ -37,6 +37,56 @@ export default function Download() {
     return new Set([role, dept, department, clearance]);
   };
 
+  const tokenMatched = (token) => {
+    const attrs = userAttributeSet();
+    const variants = tokenVariants(token);
+    return variants.some((v) => attrs.has(normalizeToken(v)));
+  };
+
+  const evaluatePolicy = (policy) => {
+    const attrs = userAttributeSet();
+    const p = String(policy || "").replace(/\s\s+/g, " ");
+    if (!p.trim()) {
+      return { matched: false, clauses: [], matchedTokens: [], missingTokens: [] };
+    }
+
+    const clauses = [];
+    const matchedTokens = new Set();
+    const missingTokens = new Set();
+
+    const andParts = p.split(" AND ").map((x) => x.trim()).filter(Boolean);
+    for (let part of andParts) {
+      const raw = part;
+      if (part.startsWith("(") && part.endsWith(")")) part = part.slice(1, -1).trim();
+      const options = part.split(" OR ").map((x) => x.trim()).filter(Boolean);
+
+      let ok = false;
+      let matched = null;
+      for (const opt of options) {
+        const variants = tokenVariants(opt);
+        if (variants.some((v) => attrs.has(normalizeToken(v)))) {
+          ok = true;
+          matched = opt;
+          matchedTokens.add(normalizeToken(opt));
+          break;
+        }
+      }
+
+      if (!ok) {
+        for (const opt of options) missingTokens.add(normalizeToken(opt));
+      }
+
+      clauses.push({ raw, options, matched: ok, matchedToken: matched });
+    }
+
+    return {
+      matched: clauses.every((c) => c.matched),
+      clauses,
+      matchedTokens: Array.from(matchedTokens),
+      missingTokens: Array.from(missingTokens),
+    };
+  };
+
   const policySatisfied = (policy) => {
     const attrs = userAttributeSet();
     const p = String(policy || "").replace(/\s\s+/g, " ");
@@ -150,13 +200,15 @@ export default function Download() {
       console.log("simulateApprovals:", res.data);
 
       const statusRes = await axios.get(`${API_BASE}/api/access/approval-status/${keyId}`);
+      const totalAuthorities = statusRes.data?.total_authorities ?? authorities.length;
+      const threshold = statusRes.data?.threshold ?? statusRes.data?.required_approvals ?? 4;
       if (statusRes.data?.is_approved) {
         setApprovalStatus("approved");
-        alert(`Approved on Ganache (${statusRes.data.current_approvals}/${statusRes.data.required_approvals}).`);
+        alert(`Approved on Ganache (${statusRes.data.current_approvals}/${totalAuthorities}). Threshold: ${threshold}.`);
       } else {
         setApprovalStatus("pending");
         alert(
-          `Not approved on Ganache yet (${statusRes.data?.current_approvals || 0}/${statusRes.data?.required_approvals || 4}).`
+          `Not approved on Ganache yet (${statusRes.data?.current_approvals || 0}/${totalAuthorities}). Threshold: ${threshold}.`
         );
       }
     } catch (err) {
@@ -295,7 +347,8 @@ export default function Download() {
                 {files.map((file) => {
                   const isSelected = selectedFile && selectedFile.id === file.id;
                   const isRequested = isSelected && approvalStatus !== "pending";
-                  const canAccess = policySatisfied(file.policy);
+                  const evaluation = evaluatePolicy(file.policy);
+                  const canAccess = evaluation.matched;
                   return (
                     <div
                       key={file.id}
@@ -312,21 +365,49 @@ export default function Download() {
 
                       <div style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <span className={canAccess ? "badge badge--success" : "badge badge--warning"}>
-                          {canAccess ? "Policy matched" : "Policy not matched"}
+                          {canAccess ? "Attributes satisfied" : "Attributes missing"}
                         </span>
-                        {(file.required_attributes || []).slice(0, 6).map((t) => (
-                          <span key={t} className="badge">{t}</span>
-                        ))}
+                        {(file.required_attributes || []).slice(0, 6).map((t) => {
+                          const ok = tokenMatched(t);
+                          return (
+                            <span key={t} className={ok ? "badge badge--success" : "badge badge--warning"}>
+                              {t}
+                            </span>
+                          );
+                        })}
                         {(file.required_attributes || []).length > 6 ? (
                           <span className="badge">+{file.required_attributes.length - 6} more</span>
                         ) : null}
                       </div>
+
+                      {isSelected ? (
+                        <div style={{ marginTop: 10 }}>
+                          <div className="help" style={{ margin: 0 }}>
+                            Policy evaluation:
+                          </div>
+                          <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+                            {evaluation.clauses.map((c, idx) => (
+                              <span key={idx} className={c.matched ? "badge badge--success" : "badge badge--warning"}>
+                                {c.matched
+                                  ? `Clause ${idx + 1}: OK (${c.matchedToken})`
+                                  : `Clause ${idx + 1}: Missing (${c.options.join(" OR ")})`}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
 
                       <div style={{ marginTop: 12, display: "flex", gap: 10 }}>
                         <button
                           className="btn"
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (!canAccess) {
+                              const ok = window.confirm(
+                                "Your attributes do NOT satisfy this file's policy. You can still request approvals, but download will be denied by policy. Continue?"
+                              );
+                              if (!ok) return;
+                            }
                             requestApproval(file);
                           }}
                           disabled={requesting || isRequested}
