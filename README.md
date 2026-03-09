@@ -18,6 +18,15 @@ Public self-registration is disabled.
 
 ## Run locally
 
+If you want the fastest working demo, start with: `START_HERE.md`.
+
+### Demo accounts
+
+On backend startup, demo users are initialized automatically (see `backend/main.py`):
+
+- Admin: `admin` / `admin123`
+- Employee: `alice` / `alice123`
+
 ### 1) Ganache
 
 ```bash
@@ -28,22 +37,37 @@ ganache-cli --accounts 7 --deterministic --host 127.0.0.1 --port 7545
 
 Deploy `contracts/KeyAuthority.sol` and update `backend/blockchain/DEPLOYMENT_INFO.json` with the deployed contract address.
 
+Recommended (auto compile + deploy to Ganache):
+
+```bash
+python -m pip install -r backend/requirements.txt
+python scripts/deploy_contract_compiled.py
+```
+
 See: `docs/root-guides/REMIX_DEPLOYMENT_GUIDE.md`
 
 ### 3) Backend
 
-This project stores encrypted file blobs in MongoDB (GridFS).
+This project stores encrypted file blobs in MongoDB (GridFS) by default, with an optional local fallback.
 
-Set these environment variables before starting the backend:
+Configure environment variables (recommended):
+
+1) Copy `.env.example` to `.env`
+2) Choose one:
+	- Offline demo: set `STORAGE_BACKEND=local`
+	- Full setup: keep `STORAGE_BACKEND=mongo` and set `MONGODB_URI` (Atlas)
+
+Environment variables:
 
 - `STORAGE_BACKEND=mongo`
-- `MONGODB_URI` (required)
+- `STORAGE_ALLOW_LOCAL_FALLBACK=true` (recommended for demos)
+- `MONGODB_URI` (required if using mongo)
 - `MONGODB_DB` (optional; default: `secure_data_sharing`)
 - `MONGODB_FILES_BUCKET` (optional; default: `encrypted_files`)
 
 ```bash
-cd backend
-python -m pip install -r requirements.txt
+cd "c:\\7th sem\\CAPSTON PROJECT\\code\\secure-data-sharing"
+python -m pip install -r backend/requirements.txt
 python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
@@ -72,4 +96,4 @@ UI: http://localhost:3000
 - If the contract address is missing/wrong, the access-control endpoints can return 503 with `contract_misconfigured`.
 - This is a capstone/demo setup (local chain, local file storage, SQLite). Production deployment would require additional hardening.
 
- 
+

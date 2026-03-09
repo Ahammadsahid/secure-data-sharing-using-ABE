@@ -11,19 +11,16 @@ cors==1.0.1
 
 # Blockchain & Web3
 web3==6.11.3
-eth-account==0.10.0
-eth-keys==0.4.0
-eth-typing==4.1.0
-pysha3==1.0.2
+# Note: let web3 resolve its own compatible eth-* dependency versions.
+
+# Solidity compile (used by scripts/deploy_contract_compiled.py)
+py-solc-x==2.0.4
 
 # Encryption & Cryptography
 cryptography==42.0.8
 pycryptodome==3.19.0
-# NOTE: charm-crypto packaging varies by platform; keep it unpinned to avoid install failures.
-charm-crypto
-
-# Database
-sqlite==0.0.1
+# NOTE: charm-crypto is not required for this demo implementation and often fails on Windows.
+# If you need it for an alternate CP-ABE implementation, install separately.
 
 # Testing
 pytest==7.4.3

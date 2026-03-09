@@ -21,6 +21,7 @@ ganache-cli --accounts 7 --deterministic --host 127.0.0.1 --port 7545
 
 cd "$(dirname "$0")"
 python -m pip install -r backend/requirements.txt
+python scripts/deploy_contract_compiled.py
 python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 
 # Expected output:
@@ -119,14 +120,11 @@ curl http://localhost:8000/api/access/authorities
 
 # Frontend Flow:
 # 1. http://localhost:3000
-# 2. Click Register
-# 3. Register new user with attributes
-# 4. Click Upload
-# 5. Upload file with ABE policy
-# 6. Click /access (or go to http://localhost:3000/access)
-# 7. Request key approval
-# 8. Simulate 4 approvals
-# 9. Click Decrypt File
+# 2. Login with demo admin: admin / admin123
+# 3. Upload file with ABE policy
+# 4. Go to /access and request key approval
+# 5. Simulate 4 approvals
+# 6. Go to /download and decrypt
 
 
 # ================================================================
@@ -213,10 +211,9 @@ rm backend/test.db
 # ================================================================
 
 # 1. QUICK_REFERENCE.md - 5 minute overview
-# 2. COMPLETE_IMPLEMENTATION_GUIDE.md - Full guide
-# 3. PROJECT_COMPLETION_SUMMARY.md - What's implemented
-# 4. VS_CODE_SETUP_GUIDE.md - VS Code tips
-# 5. http://localhost:8000/docs - API documentation
+# 2. START_HERE.md - fast demo runbook
+# 3. docs/root-guides/TESTING_GUIDE.md - tests and flows
+# 4. http://localhost:8000/docs - API documentation
 
 
 # ================================================================

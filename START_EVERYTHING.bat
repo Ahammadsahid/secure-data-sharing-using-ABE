@@ -23,6 +23,7 @@ echo ====================================================================
 echo.
 echo cd /d "%cd%"
 echo python -m pip install -r backend\requirements.txt
+echo python scripts\deploy_contract_compiled.py
 echo python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 echo.
 echo.
@@ -79,20 +80,13 @@ echo  TEST THE SYSTEM
 echo ====================================================================
 echo.
 echo 1. Open http://localhost:3000
-echo 2. Click "Register"
-echo 3. Create user:
-echo    - Username: alice
-echo    - Password: test123
-echo    - Role: admin
-echo    - Department: IT
-echo    - Clearance: top-secret
-echo 4. Login and upload a file
-echo 5. Set ABE Policy: role:admin AND department:IT
-echo 6. Click navbar item to go to /access
-echo 7. Request key approval
-echo 8. Simulate 4 approvals
-echo 9. Click Decrypt File
-echo 10. Download decrypted content
+echo 2. Login with demo admin:
+echo    - Username: admin
+echo    - Password: admin123
+echo 3. Upload a file and set an access policy
+echo 4. Go to /access and request key approval
+echo 5. Simulate 4 approvals (threshold)
+echo 6. Go to /download and decrypt/download
 echo.
 echo.
 echo ====================================================================
@@ -113,11 +107,10 @@ echo ====================================================================
 echo  DOCUMENTATION (READ IN THIS ORDER)
 echo ====================================================================
 echo.
-echo 1. QUICK_REFERENCE.md (5-minute overview)
-echo 2. COMPLETE_IMPLEMENTATION_GUIDE.md (full guide)
-echo 3. PROJECT_COMPLETION_SUMMARY.md (what's implemented)
-echo 4. VS_CODE_SETUP_GUIDE.md (VS Code tips)
-echo 5. http://localhost:8000/docs (API docs when running)
+echo 1. START_HERE.md (fast demo runbook)
+echo 2. docs\root-guides\QUICK_REFERENCE.md (5-minute overview)
+echo 3. docs\root-guides\TESTING_GUIDE.md (test + flows)
+echo 4. http://localhost:8000/docs (API docs when running)
 echo.
 echo.
 echo ====================================================================

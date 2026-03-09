@@ -1,37 +1,43 @@
-# Start here
+# Start here (presentation demo)
 
-This file is a quick path to a working local demo. For fuller context, start with:
+Fast path to a working local demo.
 
-- `README.md`
-- `docs/root-guides/QUICK_START.md`
-- `docs/root-guides/TESTING_GUIDE.md`
+If you only read one guide: `docs/root-guides/QUICK_REFERENCE.md`.
 
-## Local run
+## One-command start
 
-### Option A: one-command start
+- Windows: `START_EVERYTHING.bat`
+- macOS/Linux: `START_EVERYTHING.sh`
 
-- Windows: run `START_EVERYTHING.bat`
-- macOS/Linux: run `START_EVERYTHING.sh`
+## Manual start (recommended for presenting)
 
-### Option B: manual start
-
-1) Start Ganache (7 accounts, deterministic)
+1) Start Ganache (local blockchain)
 
 ```bash
 ganache-cli --accounts 7 --deterministic --host 127.0.0.1 --port 7545
 ```
 
-2) Deploy the smart contract and ensure `backend/blockchain/DEPLOYMENT_INFO.json` is updated.
-
-3) Start the backend
+2) Deploy the contract (auto)
 
 ```bash
-cd "c:\7th sem\CAPSTON PROJECT\code\secure-data-sharing"
 python -m pip install -r backend/requirements.txt
+python scripts/deploy_contract_compiled.py
+```
+
+If compilation/deploy fails on your network, deploy in Remix and just update `backend/blockchain/DEPLOYMENT_INFO.json`.
+
+3) (Optional) Configure storage
+
+- For an offline demo (no MongoDB Atlas): set `STORAGE_BACKEND=local` in `.env`.
+- For full setup: copy `.env.example` 7 `.env` and set `MONGODB_URI`.
+
+4) Start the backend (run from repo root)
+
+```bash
 python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-4) Start the frontend
+5) Start the frontend
 
 ```bash
 cd frontend
@@ -39,64 +45,31 @@ npm install
 npm start
 ```
 
-## What to demo (happy path)
+## Demo flow (happy path)
 
-1) Log in as an admin.
-2) Go to `/admin/users` to create user accounts (self-registration is disabled).
-3) Go to `/upload` to upload a file and set an access policy.
-4) Go to `/access` to request approvals and simulate authority approvals (threshold required).
-5) Go to `/download` to download/decrypt a file after on-chain approval.
+Pre-seeded demo accounts are created on backend startup:
+
+- Admin: `admin` / `admin123`
+- Employee: `alice` / `alice123`
+
+Flow:
+1) Log in as `admin`.
+2) Upload a file and set an access policy.
+3) Go to `/access` and request approvals.
+4) Simulate approvals until threshold is met.
+5) Download/decrypt from `/download`.
+
+## Quick checks
+
+- Backend docs: http://127.0.0.1:8000/docs
+- API health: http://127.0.0.1:8000/
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---|---|
-| Ganache not reachable | Confirm `127.0.0.1:7545` and the Ganache process is running |
-| Backend import errors | Run `python -m pip install -r backend/requirements.txt` |
-| Frontend can’t reach API | Confirm backend is running on `127.0.0.1:8000` |
-| Contract checks failing | Redeploy and update `backend/blockchain/DEPLOYMENT_INFO.json` |
-
-## Notes
-
-- Ganache is local/dev-only; for real hosting you’ll need a public chain/testnet and deployed contract.
-- The backend has interactive docs at http://127.0.0.1:8000/docs
-
----
-
-## **Next 30 Days**
-
-Optional improvements for production:
-- Deploy to testnet (Sepolia)
-- Use PostgreSQL instead of SQLite
-- Add JWT authentication
-- Implement API rate limiting
-- Deploy to cloud (AWS/Azure/GCP)
-- Add monitoring & alerting
-- Create mobile app
-- Publish to GitHub
-
----
-
-## **Questions? Check These Files**
-
-- **"How do I start?"** → START_EVERYTHING.bat
-- **"Quick overview?"** → QUICK_REFERENCE.md
-- **"How does it work?"** → COMPLETE_IMPLEMENTATION_GUIDE.md
-- **"Architecture?"** → VISUAL_SUMMARY.md
-- **"What's done?"** → PROJECT_COMPLETION_SUMMARY.md
-- **"Is it complete?"** → CHECKLIST.md
-- **"API docs?"** → http://localhost:8000/docs (when running)
-
----
-
-## **MOST IMPORTANT**
-
-**Go read `QUICK_REFERENCE.md` next!** 👈
-
-It has everything you need in 5 minutes.
-
----
-
-```
-```
+| Ganache not reachable | Confirm `127.0.0.1:7545` and Ganache is running |
+| Frontend cant reach API | Confirm backend is on `127.0.0.1:8000` |
+| Contract misconfigured | Re-run `python scripts/deploy_contract_compiled.py` |
+| MongoDB blocked/unavailable | Set `STORAGE_BACKEND=local` (or keep mongo + fallback) |
 
